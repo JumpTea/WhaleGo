@@ -3,3 +3,8 @@ Copyright (c) 2026 WhaleGo contributors
 
 Portions of the speech pipeline are derived from Voice-Nebula,
 Copyright (c) 2026 Voice-Nebula contributors, licensed under the MIT License.
+
+The MIT License applies to source code only. The names "鲸语" and "WhaleGo",
+the pixel-whale mark, and the brand assets in assets/brand/ are project
+trademarks and are not licensed for use as a trademark or in a way that
+suggests endorsement by the project or by DSH-Go.

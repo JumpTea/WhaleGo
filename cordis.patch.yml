@@ -1,0 +1,4 @@
+# id: unique within the profile; name must equal package.json "name".
+- insert:
+    - id: whalego
+      name: whalego

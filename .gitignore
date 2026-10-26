@@ -1,6 +1,8 @@
 node_modules/
 dist/
 build/
+__pycache__/
+*.pyc
 *.log
 .env
 .env.*
@@ -8,5 +10,9 @@ build/
 Thumbs.db
 assets/promo/src/
 assets/promo/frames/
+assets/promo/stills/
+assets/promo/check/
+assets/promo/whalego-promo-video.mp4
+assets/promo/whalego-promo-audio.wav
 *.tmp
 *.bak

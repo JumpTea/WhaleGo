@@ -1,0 +1,153 @@
+{
+  "name": "whalego",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "description": "Dual-brain voice plugin for DSH-Go. Hear it first, read it after.",
+  "license": "MIT",
+  "author": "WhaleGo contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JumpTea/WhaleGo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JumpTea/WhaleGo/issues"
+  },
+  "homepage": "https://github.com/JumpTea/WhaleGo",
+  "keywords": [
+    "dsh-go",
+    "voice",
+    "tts",
+    "plugin",
+    "deepseek",
+    "whale"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.2 <0.3.0-0",
+    "node": ">=24"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dshGo": {
+    "v": 1,
+    "title": {
+      "zh": "鲸语",
+      "en": "WhaleGo"
+    },
+    "icon": "mic",
+    "wants": [
+      "draft",
+      "message"
+    ],
+    "capabilities": [
+      "audio"
+    ],
+    "contributes": {
+      "composer.actions": [
+        {
+          "id": "whalego.ask",
+          "label": {
+            "zh": "鲸语",
+            "en": "Whale"
+          },
+          "icon": "mic",
+          "requires": [
+            "audio"
+          ]
+        },
+        {
+          "id": "whalego.stop",
+          "label": {
+            "zh": "停",
+            "en": "Stop"
+          }
+        }
+      ],
+      "message.actions": [
+        {
+          "id": "whalego.read",
+          "label": {
+            "zh": "朗读",
+            "en": "Read"
+          },
+          "icon": "play"
+        },
+        {
+          "id": "whalego.explain",
+          "label": {
+            "zh": "鲸语解释",
+            "en": "Explain"
+          },
+          "icon": "chat"
+        }
+      ],
+      "composer.strip": [
+        {
+          "id": "whalego.status",
+          "icon": "mic",
+          "text": {
+            "zh": "鲸语 · 待命",
+            "en": "WhaleGo · idle"
+          },
+          "panel": "whalego.live"
+        }
+      ],
+      "panels": [
+        {
+          "id": "whalego.live",
+          "title": {
+            "zh": "鲸语实录",
+            "en": "WhaleGo Live"
+          },
+          "icon": "chat",
+          "placement": [
+            "session.tab",
+            "features"
+          ]
+        },
+        {
+          "id": "whalego.settings",
+          "title": {
+            "zh": "鲸语设置",
+            "en": "WhaleGo Settings"
+          },
+          "icon": "wrench",
+          "placement": [
+            "features"
+          ]
+        },
+        {
+          "id": "whalego.about",
+          "title": {
+            "zh": "关于鲸语",
+            "en": "About WhaleGo"
+          },
+          "icon": "sparkle",
+          "placement": [
+            "features"
+          ]
+        },
+        {
+          "id": "whalego.diag",
+          "title": {
+            "zh": "接缝诊断",
+            "en": "Seam Check"
+          },
+          "icon": "bug",
+          "placement": [
+            "features"
+          ]
+        }
+      ],
+      "media": [
+        {
+          "id": "speech"
+        }
+      ]
+    }
+  }
+}
