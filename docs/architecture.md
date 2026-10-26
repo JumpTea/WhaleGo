@@ -22,7 +22,7 @@ WhaleGo 是 DSH-Go 的宿主插件：代码跑在手机 rootfs 的 Node 24 里�
 └────────────────────────────────────────────┘
 ```
 
-App 只执行声明，不执行插件代码；插件只返回 JSON 与音频字节。两边的契约是 `package.json` 的 `dshGo` 字段、视图 schema、效果 schema 与 `ctx.dshGo` 方法。
+App 只执行声明，不执行插件代码；插件只返回 JSON 与音频字节。两边的契约是 `package.json` 的 `dshGo` 字段、视图 schema、效果 schema 与 `ctx.dshGo` 方法。会话消息（用户原问题、文字答案）由 DSH 原生持有；语音行是原生会话列表里的临时行，和文字答案同列，不走 overlay。
 
 ## 2. 模块
 
@@ -52,27 +52,25 @@ App 只执行声明，不执行插件代码；插件只返回 JSON 与音频字�
   │
   ├─ engine.ask(scope)
   │    ├─ 取 scope.draft 与 scope.sessionId
-  │    ├─ 选模式（auto / dual / read）
+  │    ├─ 选模式（auto / dual / voice-only / read）
+  │    ├─ 把用户原问题写入 DSH 会话（voiceTurn / appendUser）
   │    ├─ transcript.start(turnId, sessionId, question)
   │    └─ 返回 { type:'audio', op:'play', src:'media:speech', key:turnId }
   │
   ├─ App 调 media('speech') → engine.media(scope, {key})
   │
   ├─ engine.#runTurn
-  │    ├─ dual:
-  │    │   ├─ #runVoice → voiceBrain.stream()
-  │    │   │    ├─ onDelta → transcript.appendVoice + seam.appendVoiceLine(partial)
-  │    │   │    └─ 完成 → transcript.setVoice + TTS.synthesize
-  │    │   └─ textBrain.prompt() 并行
-  │    │        └─ DSH 产生 assistant 流
-  │    │             ├─ onAssistantFrame(text-delta) → transcript.setText
-  │    │             └─ frame end → transcript.setText(final)
-  │    └─ read:
-  │        ├─ textBrain.prompt() → waitForEnd(22s)
-  │        ├─ spokenOf(answer, 180)
-  │        └─ TTS.synthesize
+  │    ├─ voice-only / dual 都先跑 #runVoice
+  │    │   ├─ 同一会话上下文 → voiceBrain.stream()
+  │    │   │    ├─ onDelta → transcript.appendVoice + seam.appendVoiceLine(full text)
+  │    │   │    └─ 句子边界 → TTS.synthesize(sentence) → audioStream.write(chunk)
+  │    │   └─ 首块音频就开播，不等整段生成
+  │    └─ 仅 dual 才 textBrain.prompt() 并行
+  │         └─ 同一会话产生 assistant 流
+  │              ├─ onAssistantFrame(text-delta) → transcript.setText
+  │              └─ frame end → transcript.setText(final)
   │
-  ├─ media 等 job.audio（TTS Buffer）→ { body, contentType }
+  ├─ media 返回首块音频；后续块由 audioStream 追加
   │
   └─ App 播放；结束后发 onCapability('audio.ended')
        └─ #finishJob → transcript done → 状态回 idle
@@ -80,9 +78,10 @@ App 只执行声明，不执行插件代码；插件只返回 JSON 与音频字�
 
 关键点：
 
-- **文字脑不经过语音脑。** 两者拿到同一个问题，独立生成；语音脑的 180 字上限不影响文字答案。
-- **语音行与文字答案分属两条记录。** `transcript` 同时保存 `voice` 与 `text`，但只把 `voice` 推给原生；`text` 由 DSH 自己渲染。插件不写回会话历史。
-- **TTS 在 Voice 完成后才开始。** 语音脑先流式出字，整句稳定后再合成；不逐字合成，避免碎片化。
+- **语音行和文字答案在同一消息列表。** 语音行是会话里的一条临时记录，排在当前轮文字答案上方；不用 `overlay`、字幕条、弹幕或第二条悬浮窗。
+- **两脑同会话、同上下文。** 语音脑不再用独立的 `llm.stream` + 最近几轮 transcript，而是走会话内的 voice turn，能看到和文字脑相同的历史、工具与环境；简单问题只跑语音脑，但用户原问题照常落进会话。
+- **文字脑不经过语音脑。** 两者拿到同一个问题，独立生成；语音脑的口语上限不影响文字答案。
+- **全流式。** 语音文字按 delta 更新 `voiceLine`；TTS 按句合成，首块音频立即写进 `audioStream`，不整段等待。
 - **音频播完才收尾。** App 的 `audio.ended` 是主信号；没有事件时用「字节数 / 6000 + 1.2s」的保守计时兜底。
 
 ## 4. 状态机
@@ -104,13 +103,13 @@ idle ──ask──▶ thinking ──首块音频──▶ speaking ──audi
 
 ```text
 prefs.mode === 'dual'  → dual
-prefs.mode === 'read'  → read
+prefs.mode === 'read'  → read（只朗读已有答案，不开语音脑）
 prefs.mode === 'auto'  → complexityOf(question)
                          ├─ 含「整理 / 对比 / 表格 / 文件 / 代码…」→ dual
-                         └─ 其余 → read
+                         └─ 其余 → voice-only
 ```
 
-`complexityOf` 是启发式，不是模型判断；宁可多走一次双脑，也不要把复杂问题压成一句朗读。
+`complexityOf` 是启发式，不是模型判断；voice-only 只省掉文字脑，不省用户消息。判断错时用户仍能看到语音行，并可手动切 dual。
 
 ## 6. 数据与隐私
 
@@ -129,11 +128,11 @@ prefs.mode === 'auto'  → complexityOf(question)
 `nativeSeam.js` 在构造时做一次特性探测：
 
 ```js
-voiceLine: typeof bridge.voiceLine === 'function'
-orb:       typeof bridge.orb === 'function'
-settings:  typeof bridge.settings === 'function'
+voiceLine:   typeof bridge.voiceLine === 'function'
 audioStream: typeof bridge.audioStream === 'function'
+voiceTurn:   typeof bridge.voiceTurn === 'function'
 voiceSession: typeof bridge.voice === 'function'
+orb:         typeof bridge.orb === 'function'
 ```
 
 每个方法失败都返回 `false` / `null`，不抛异常；引擎据此走面板、设置页、整段 `media`、点按 STT 的降级路径。接缝诊断面板把 `declared` 与 `native` 并列，避免「声明了但没实现」被误判为成功。
@@ -144,9 +143,12 @@ voiceSession: typeof bridge.voice === 'function'
 | --- | --- |
 | 没有 `sessionId` | 返回 `insert` + toast，提示发送后点消息上的「朗读」 |
 | 空输入 | `{ toast: '先写一句话。' }`，不创建任务 |
+| 没有 `voiceTurn` | 退回 `session.prompt`；用户消息仍进会话，语音脑只能用 transcript 上下文（降级） |
+| 没有 `audioStream` | 用 `media` 整段播放；首声延迟变大，句间可能有空档 |
+| 没有 `voiceLine` | 用「鲸语实录」面板；不伪造 assistant 消息 |
 | 语音脑超时 / 空 | 用 `VOICE_FALLBACK`（「我先看一下，答案在下面。」） |
 | 文字脑报错 | 记录 `error`，语音仍可播；诊断面板可见 |
-| TTS 失败 | `media` 抛 `WhaleError`；App 显示人话错误；文字答案不受影响 |
+| TTS 失败 | `media` / `audioStream` 抛 `WhaleError`；App 显示人话错误；文字答案不受影响 |
 | 音频 key 过期 | 3 分钟后清理任务；提示「这段语音已过期，请再点一次。」 |
 | App 不发 `audio.ended` | 兜底计时标记完成 |
 | 用户打断 | abort 信号贯穿语音脑、文字脑、TTS；迟到结果丢弃 |
@@ -163,6 +165,7 @@ voiceSession: typeof bridge.voice === 'function'
 ## 10. 约束
 
 - 不引入第三方运行时依赖；Node 24 内置 WebSocket、fetch、crypto。
-- 不改 DSH 的会话历史，不伪造 `assistant` 消息。
+- 不伪造 `assistant` 消息；用户原问题由宿主正常写入，语音行是临时行，不写 session 事件日志。
+- 语音行和文字答案必须在同一个会话消息列表里，不用 overlay / 字幕 / 弹幕 / 浮窗替代。
 - 不自定义颜色、字体、像素尺寸、动画曲线；只传语义枚举。
 - 所有视图节点可被 `kit-lib-check` 静态检查；`views.js` 保持纯函数。

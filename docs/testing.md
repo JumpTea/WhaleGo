@@ -14,8 +14,8 @@ node --test
 | 清单可解析、字段合法 | `package.json` 的 `dshGo`、插槽数量、id 唯一 |
 | 视图预算 | 4 个面板的节点数、深度、标题长度 |
 | 设置读写 | 11 组偏好归一化、保存、恢复默认 |
-| 自动模式 | 简单问题走 `read`，复杂问题走 `dual` |
-| 双脑启动 | `ask` 同时启动语音脑与文字脑，返回 `audio` 效果 |
+| 自动模式 | 简单问题当前走 `read`，复杂问题走 `dual`；`voice-only` 是目标，尚未实现 |
+| 双脑启动 | `ask` 当前同时启动语音脑与文字脑；目标只有 `dual` 双脑，`voice-only` 只跑语音 |
 | 停止 | `stop` abort 两个脑，记录标记 `interrupted` |
 | 媒体过期 | 不存在的 key 抛人话错误 |
 | 无会话 ID | 返回 `insert`，不创建任务 |
@@ -55,11 +55,13 @@ node -e "import('./lib/tts/edge.js').then(async m => { const b = await m.synthes
 | 项 | 本地（Node） | 真机（DSH-Go） | 判定 |
 | --- | --- | --- | --- |
 | 插件挂载 | 假宿主 `--load` | 重启后按钮出现 | 必须 |
-| 双脑启动 | 单测检查两个脑都启动 | 语音与文字都出现 | 必须 |
+| 双脑按需 | 当前单测覆盖 `dual` / `read`；`voice-only` 待补 | 简单问题只有语音行，复杂问题语音 + 文字 | 必须 |
 | 语音行进会话 | 只能验 `transcript` 记录 | 需要 `native.voiceLine` | 原生补齐后 |
 | 文字答案在语音下方 | 只能验记录顺序 | 需要 `native.voiceLine.order` | 原生补齐后 |
-| 悬浮球 | 只能验偏好保存 | 需要 `native.orb` | 原生补齐后 |
-| 插件页设置 | 只能验面板 | 需要 `native.settings` | 原生补齐后 |
+| 简单问题用户消息落库 | 只能验记录 | 需要 `native.voiceTurn` | 原生补齐后 |
+| 两脑同会话同上下文 | 只能验调用形状 | 需要 `native.voiceTurn` | 原生补齐后 |
+| 悬浮球（仅控制） | 只能验偏好保存 | 需要 `native.orb` | 原生补齐后 |
+| 插件设置 | 只能验面板 | 迁到 DSH 插件设置 schema（插件侧） | 必须 |
 | 流式音频 | 只能验整段 `media` | 需要 `native.audioStream` | 原生补齐后 |
 | 免手语音 | 只能验点按路径 | 需要 `native.voice` | 原生补齐后 |
 | 打断 | 单测 abort | 说话时 TTS 200 ms 内停 | 必须 |
@@ -71,11 +73,11 @@ node -e "import('./lib/tts/edge.js').then(async m => { const b = await m.synthes
 1. 安装 DSH-Go `0.2.1-rc.2` 或更新。
 2. 把仓库复制到 `$DSH_HOME/dsh-go/plugins/local-whalego/`。
 3. 重载宿主；确认发送区出现「鲸语」，消息区出现「朗读」「鲸语解释」。
-4. 输入「你好」→ 点「鲸语」→ 听声音，看「鲸语实录」。
-5. 输入「帮我查一下 2026 年 LLM 排行榜，整理成表格」→ 点「鲸语」→ 看语音与文字是否同时出现。
-6. 点「停」→ 声音停止，实录保留已说内容。
+4. 输入「你好」→ 点「鲸语」→ 听声音；确认会话里只有用户消息 + 语音行，没有文字答案。
+5. 输入「帮我查一下 2026 年 LLM 排行榜，整理成表格」→ 点「鲸语」→ 看语音行与文字答案是否同时出现、语音行是否在上。
+6. 点「停」→ 声音停止，语音行保留已说内容。
 7. 打开「鲸语设置」→ 改声线、语速、悬浮球样式 → 立即生效。
-8. 打开「接缝诊断」→ 记录五项 `native` 状态。
+8. 打开「接缝诊断」→ 记录五项 `native` 状态（`voiceLine` / `audioStream` / `voiceTurn` / `voice` / `orb`）。
 9. 退后台 5 秒再回来 → 声音 / 录音 / 球都恢复待命。
 
 ## 6. 失败注入
@@ -89,7 +91,10 @@ node -e "import('./lib/tts/edge.js').then(async m => { const b = await m.synthes
 ## 7. 未验证 / 限制
 
 - **真机未跑**：本机没有 Android 设备与 DSH-Go 宿主，所有真机项标记为待验。
-- **原生五项未实现**：`voiceLine` / `orb` / `settings` / `audioStream` / `voice` 是空接口，验收要看原生桥。
+- **原生核心三项未实现**：`voiceLine` / `audioStream` / `voiceTurn` 是空接口或降级路径，验收要看原生桥；`voice` / `orb` 是外围，`settings` 走插件设置 schema。
+- **语音脑上下文**：当前语音脑用独立 `llm.stream` + transcript 最近几轮，不在 DSH 会话上下文；`voiceTurn` 落地前，两脑上下文不一致。
+- **简单问题仍跑文字脑**：`#selectMode` 当前走 `read`；`voice-only` 是目标，尚未实现。
+- **TTS 非流式**：当前整段合成；`audioStream` 落地前首声延迟大。
 - **Edge TTS 网络**：本机实测通过，但手机网络、代理、区域限制未验证。
 - **长音频**：`media` 整段 ≤30 秒；超过要切段，句间会有空档。
 - **多语言**：目前只做了中文文案与三档中文声线；英文界面只有部分文案。
