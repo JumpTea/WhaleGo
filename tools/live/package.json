@@ -1,0 +1,10 @@
+{
+  "name": "whalego-live",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Real-key smoke tests for WhaleGo. Requires DEEPSEEK_API_KEY or ~/.dsh/.env.",
+  "dependencies": {
+    "playwright-core": "^1.55.0"
+  }
+}

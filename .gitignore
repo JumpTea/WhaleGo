@@ -16,3 +16,8 @@ assets/promo/whalego-promo-video.mp4
 assets/promo/whalego-promo-audio.wav
 *.tmp
 *.bak
+artifacts/
+
+film/node_modules/
+film/out/
+film/.remotion/

@@ -1,4 +1,4 @@
-# 鲸语 · WhaleGo
+# WhaleGo · 鲸语
 
 > 先听见，再见。
 
@@ -8,11 +8,10 @@ DSH-Go 的双脑语音插件。语音脑负责听和说，文字脑负责把复�
 
 ## 宣传片
 
-[![鲸语 WhaleGo 75 秒产品片](assets/brand/social-preview-1280x640.png)](assets/promo/whalego-promo-75s.mp4)
+[![WhaleGo 48 秒产品片](assets/brand/social-preview-1280x640.png)](assets/promo/whalego-promo-48s.mp4)
 
-- [1080p · 75s](assets/promo/whalego-promo-75s.mp4)
-- [720p · 75s](assets/promo/whalego-promo-75s-720p.mp4)
-- 旁白与演示声由 Edge TTS 生成，配乐由 ACE-Step 生成，画面全部由 `tools/promo/make-promo.py` 逐帧绘制；没有真实截图、真实聊天记录或个人信息。
+- [1080p · 48s · 60fps](assets/promo/whalego-promo-48s.mp4)
+- 12 个镜头，英文主标题、中文副标题；旁白与演示声由 Edge TTS 生成，配乐由 ACE-Step 生成，画面由 Remotion 组件渲染；没有真实截图、真实聊天记录或个人信息。
 
 ## 名字
 

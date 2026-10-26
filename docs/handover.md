@@ -34,7 +34,7 @@ WhaleGo 是 DSH-Go 的双脑语音插件：语音脑先说，文字脑随后写�
 - 流式音频（`audioStream`）——当前用 `media` 整段返回。
 - 免手语音会话（`voice`）——当前用原生点按 STT。
 - 真机验收：需要一台装 DSH-Go 的 Android 设备；本仓库的测试只覆盖宿主逻辑与契约。
-- 宣传片：75 秒成片已产出，1080p 与 720p 见 `README.md`；脚本与分镜在 `docs/brand.md`。
+- 宣传片：48 秒 / 60fps 成片见 `assets/promo/whalego-promo-48s.mp4`；Remotion 工程在 `film/`，分镜与混音说明在 `docs/brand.md`。
 
 ## 3. 代码地图
 
@@ -212,5 +212,5 @@ python tools/brand/make-brand.py
 2. 加 `audioStream`，把长回答的首句延迟压到 2 秒内。
 3. 加 `voice` 免手与 barge-in。
 4. 真机跑第 7 节验收，记录到 `docs/testing.md`。
-5. 宣传片已出片；改版时改 `tools/promo/make-promo.py` 与旁白，重跑 `--full`、`mix-audio.py`、再合并。
-6. 发布 `0.1.0`：打 tag、写 release notes、附社交预览图与 75 秒成片。
+5. 宣传片已出片；改版时改 `film/src/Promo.tsx` 与 `film/public/audio/`，重渲染序列、跑 `tools/promo/mix-audio-48.py`、再 mux。
+6. 发布 `0.1.0`：打 tag、写 release notes、附社交预览图与 48 秒成片。
