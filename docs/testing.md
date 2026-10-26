@@ -55,9 +55,10 @@ node -e "import('./lib/tts/edge.js').then(async m => { const b = await m.synthes
 | 项 | 本地（Node） | 真机（DSH-Go） | 判定 |
 | --- | --- | --- | --- |
 | 插件挂载 | 假宿主 `--load` | 重启后按钮出现 | 必须 |
-| 双脑按需 | 当前单测覆盖 `dual` / `read`；`voice-only` 待补 | 简单问题只有语音行，复杂问题语音 + 文字 | 必须 |
-| 语音行进会话 | 只能验 `transcript` 记录 | 需要 `native.voiceLine` | 原生补齐后 |
-| 文字答案在语音下方 | 只能验记录顺序 | 需要 `native.voiceLine.order` | 原生补齐后 |
+| 双脑按需 | 当前单测覆盖 `dual` / `read`；`voice-only` 待补 | 简单问题只有一条语音消息，复杂问题两条消息 | 必须 |
+| 语音消息进会话并持久化 | 只能验 `transcript` 记录 | 需要 `native.voiceLine`；刷新、重进仍在 | 原生补齐后 |
+| 两条消息各自可复制 | 只能验记录顺序 | 需要 `voiceLine.order` 与独立消息 | 原生补齐后 |
+| 实时转写 | 无 | 说话时草稿用户消息逐字更新，定稿一条 | 原生补齐后 |
 | 简单问题用户消息落库 | 只能验记录 | 需要 `native.voiceTurn` | 原生补齐后 |
 | 两脑同会话同上下文 | 只能验调用形状 | 需要 `native.voiceTurn` | 原生补齐后 |
 | 悬浮球（仅控制） | 只能验偏好保存 | 需要 `native.orb` | 原生补齐后 |

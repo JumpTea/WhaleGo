@@ -124,22 +124,25 @@ await service.voiceTurn({
 ```text
 ask(scope)
   → 选模式（auto / dual / voice-only / read）
-  → 把用户原问题写入 DSH 会话
-  → transcript.start
-  → 返回 { type:'audio', op:'play', instance:'whalego', src:'media:speech', key:turnId }
+  → 有 voiceTurn：交给宿主写用户消息、建语音消息；插件只消费事件
+  → 无 voiceTurn：降级为 textBrain.prompt() + 独立 voiceBrain + appendVoiceLine
 
 media(scope, {key})
   → 首块音频即返回；后续块走 audioStream（无 audioStream 时整段 media）
 
 voice-only:
-  voiceTurn (same session/context) → onDelta → transcript.appendVoice + seam.appendVoiceLine(full text)
-                                     → 句子边界 → TTS.synthesize(sentence) → audioStream.write
-                                     → onDone → transcript final
+  voiceTurn(mode:'voice-only')
+    → 宿主写一条用户消息
+    → 语音消息（context:true）流式更新 → onDelta 全量替换
+    → 句子边界 → TTS.synthesize(sentence) → audioStream.write
+    → onDone → final 冻结，持久化
 
 dual:
-  voice-only 的同一套语音流
-  + textBrain.prompt() → DSH assistant 流 → onAssistantFrame → transcript.setText
-                                           → frame end → transcript.setText(final)
+  voiceTurn(mode:'dual')
+    → 宿主在同一轮跑文字脑，插件不调 session.prompt（否则用户消息双写）
+    → 语音消息（context:false）在上
+    → 文字答案（正常 assistant 消息）在下
+    → 两条都持久化、各自可复制
 
 audio.ended → finishJob → transcript done → idle
 ```
@@ -147,25 +150,27 @@ audio.ended → finishJob → transcript done → idle
 关键不变量：
 
 1. 文字答案不来自语音转写，两者独立生成；但共享同一个会话与上下文。
-2. 用户原问题由宿主正常写入；插件不伪造 assistant 消息；语音行是临时行，不写 session 日志。
-3. 语音行和文字答案在同一个消息列表；语音行最多 180 字，文字答案不截断。
-4. 简单问题只产生用户消息 + 语音行，不产生文字答案。
+2. 用户原问题由宿主正常写入；语音消息与文字答案都由宿主写入并持久化；插件只按 `lineId` 幂等更新，不伪造 assistant 消息。
+3. `dual` 是两条独立 assistant 消息：语音在上、文字在下，各自可复制；语音最多 180 字，文字答案不截断。
+4. 简单问题只产生用户消息 + 一条语音消息，不产生文字答案；语音消息就是本轮回答，留在历史里。
 5. `stop` / `interrupt` 同时 abort 语音脑、音频流、文字脑、TTS。
 6. 没有 `sessionId` 时只 `insert`，不自动发送。
 
 ## 6. 原生接缝
 
-`lib/nativeSeam.js` 探测五个方法：
+`lib/nativeSeam.js` 目前探测五个方法：
 
 | 方法 | 参数 | 返回 | 当前降级 |
 | --- | --- | --- | --- |
-| `voiceLine` | `{ sessionId, lineId, role, text, final, order }` | `Promise<void>` | 只写 `transcript`，面板显示 |
+| `voiceLine` | `{ sessionId, lineId, role, text, final, audioRef, context, order }` | `Promise<void>` | 只写 `transcript`，面板显示 |
 | `audioStream` | `{ id, contentType, sampleRate, channels }` | `{ write, end, abort }` | 用 `media` 整段 |
-| `voiceTurn` | `{ sessionId, turnId, question, mode, signal }` | `{ onDelta, onSentence, onDone, onError, cancel }` | 用 `session.prompt` + 独立 `llm.stream` |
-| `voice` | `{ mode, language, vad, partial, onPartial, onFinal, … }` | `{ stop }` | 用原生点按 STT |
+| `voice` | `{ sessionId, mode, language, vad, partial, onPartial, onFinal, … }` | `{ stop }` | 用原生点按 STT |
 | `orb` | `{ visible, style, size, idle, state, sessionId }` | `Promise<void>` | 只存偏好 |
+| `settings` | 设置 schema | `Promise<void>` | 面板自渲染 |
 
-完整字段、事件、验收标准见 [`native-gaps.md`](native-gaps.md)。原生侧只需在 `dshGo.native` 上挂这五个方法；插件其他文件不用改。设置迁移是插件侧改动：把 `whalego.settings` 面板换成 DSH 插件设置 schema，不占原生接缝。
+`voiceTurn` 与 `voiceInput` **还没有接缝**：文档里定了目标形状，`lib/nativeSeam.js` 里没有对应方法；原生桥落地前先补探测，再改 `lib/engine.js`。
+
+完整字段、事件、验收标准见 [`native-gaps.md`](native-gaps.md)。原生侧在 `dshGo.native` 上挂方法；设置迁移是插件侧改动：把 `whalego.settings` 面板换成 DSH 插件设置 schema，不占原生接缝。
 
 ## 7. 运行与验证
 
@@ -200,7 +205,7 @@ python tools/brand/make-brand.py
 ## 8. 约束
 
 - **不自定义颜色、字体、像素尺寸、动画曲线。** 只传语义枚举；绘制由 Flutter 负责。
-- **不写回会话历史。** 不伪造 assistant 消息，不改 DSH 的事件日志。
+- **不伪造会话记录。** 语音消息与文字答案由宿主写入并持久化；插件只按 `lineId` 幂等更新，不改 DSH 的事件日志。
 - **不接触原始麦克风音频。** 只接收文本与事件。
 - **不放密钥。** Edge TTS 无需密钥；不要引入需要 token 的 TTS。
 - **不暴露实录。** 不新增读取实录的 HTTP 路由。
@@ -216,15 +221,17 @@ python tools/brand/make-brand.py
 - TTS 当前整段合成，不是按句流式；`audioStream` 落地前首声延迟大，长回答句间有空档。
 - 简单问题当前仍会跑文字脑（`#selectMode` 走 `read`）；目标 `voice-only` 尚未实现。
 - `appendVoiceLine` 当前传增量，契约要求全量；原生 `voiceLine` 落地前，面板/接缝显示可能重复或丢字。
-- 文字答案与语音行的上下顺序目前由 App 决定；原生 `voiceLine.order` 落地前，面板里只能按记录顺序展示。
+- 语音消息持久化未实现：现在只写 `transcript.json` 并在「鲸语实录」面板显示；会话里的持久消息要等 `voiceLine`。
+- 实时转写未实现：说话时没有 partial，用户消息在说完后一次性写入；要等 `voiceInput`。
+- 文字答案与语音消息的上下顺序目前由 App 决定；原生 `voiceLine.order` 落地前，面板里只能按记录顺序展示。
 - 真机上的 Edge TTS 网络可用性未验证；失败会回退文字，不阻塞。
 
 ## 10. 下一步
 
-1. 原生侧 P0：`voiceLine` / `audioStream` / `voiceTurn`（同一会话 + 用户消息落库 + 条件文字脑）。
-2. 插件侧：把 `voiceBrain` 从独立 `llm.stream` 切到 `voiceTurn`；`#selectMode` 的简单分支改 `voice-only`；TTS 改按句流式；`appendVoiceLine` 传全文。
+1. 原生侧 P0：`voiceLine`（持久化消息）/ `audioStream` / `voiceTurn`（双脑与两条消息）/ `voiceInput`（实时转写）。
+2. 插件侧：补 `openVoiceTurn` / `openVoiceInput` 探测；`voiceBrain` 切到 `voiceTurn`；`#selectMode` 的简单分支改 `voice-only`；TTS 改按句流式；`appendVoiceLine` 传全量并带 `context`。
 3. 插件侧：设置迁到 DSH 插件设置 schema；`orb` 作为 P2 控制入口。
-4. 原生侧 P1：`voice` 免手与 barge-in。
+4. 原生侧 P1：免手、VAD、barge-in。
 5. 真机跑第 7 节验收，记录到 `docs/testing.md`。
 6. 宣传片已出片；改版时改 `film/src/Promo.tsx` 与 `film/public/audio/`，重渲染序列、跑 `tools/promo/mix-audio-48.py`、再 mux。
 7. 发布 `0.1.0`：打 tag、写 release notes、附社交预览图与 48 秒成片。
