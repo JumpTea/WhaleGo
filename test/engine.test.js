@@ -54,6 +54,7 @@ function makeHarness({ dshGo, attachments } = {}) {
       if (name === 'llm') return llm;
       if (name === 'sessionController') return session;
       if (name === 'sessions') return { get: (id) => (id === 's1' ? liveSession : undefined) };
+      if (name === 'attachments') return attachments;
       return undefined;
     },
     logger: { warn() {}, info() {} },
