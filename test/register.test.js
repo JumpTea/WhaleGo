@@ -99,6 +99,7 @@ test('apply mounts panels, handlers, strip and the health route', () => {
   assert.ok(routes.some((registered) => registered.path === '/whalego/health'));
   assert.ok(routes.some((registered) => registered.path === '/whalego/voices'));
   assert.ok(routes.some((registered) => registered.path === '/whalego/voice-turn'));
+  assert.ok(routes.some((registered) => registered.path === '/whalego/cancel'));
 
   const settings = panels.get('whalego.settings').actions;
   const result = settings.mode({}, { value: 'dual' });
