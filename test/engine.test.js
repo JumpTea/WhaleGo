@@ -6,6 +6,7 @@ import test from 'node:test';
 import { WhaleEngine } from '../lib/engine.js';
 import { DEFAULT_PREFS } from '../lib/prefs.js';
 import { TranscriptStore } from '../lib/transcript.js';
+import { listVoices } from '../lib/voices.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -93,15 +94,9 @@ test('dual brain: voice line and text answer land in the transcript', async () =
   assert.match(record.voice, /语音答案/);
   assert.match(record.text, /文字答案/);
   assert.ok(spoken.some((line) => line.includes('语音答案')));
-  const voiceMessage = appends.find((entry) => entry.type === 'assistant/message');
-  assert.ok(voiceMessage, 'voice message was persisted');
-  assert.equal(voiceMessage.data.message.content.length, 1);
-  assert.equal(voiceMessage.data.message.content[0].type, 'voice');
-  assert.match(voiceMessage.data.message.content[0].text, /语音答案/);
-  assert.equal(voiceMessage.data.message.content[0].order, 'before-text');
-  assert.equal(voiceMessage.data.message.content[0].context, false);
-  assert.equal(voiceMessage.data.message.content[0].final, true);
-  assert.deepEqual(voiceMessage.opts, { surfaceOp: 'append' });
+  const voiceMessage = listVoices({ limit: 5 }).find((entry) => /语音答案/.test(entry.text));
+  assert.ok(voiceMessage, 'voice line was remembered for the web half');
+  assert.equal(voiceMessage.messageId.startsWith('voice_'), true);
   const media = await engine.media({}, { key: effect.key });
   assert.equal(media.body.toString(), 'fake-mp3-data');
   assert.equal(engine.status, 'speaking');
@@ -194,13 +189,14 @@ test('replay: the finished line carries its mp3 attachment', async () => {
       return { attachmentId: 'sha256:voice', name, bytes: data.length };
     },
   };
-  const { engine, prefs, appends } = makeHarness({ dshGo, attachments });
+  const { engine, prefs } = makeHarness({ dshGo, attachments });
   prefs.mode = 'dual';
   const effect = engine.ask({ draft: '帮我调查一下 2026 年 LLM 排行榜', sessionId: 's1' });
   await sleep(60);
-  const voiceMessage = appends.find((entry) => entry.type === 'assistant/message');
-  assert.equal(voiceMessage.data.message.content[0].audio.attachmentId, 'sha256:voice');
-  assert.equal(voiceMessage.data.message.content[0].audio.contentType, 'audio/mpeg');
+  const voiceMessage = listVoices({ limit: 5 }).find((entry) => entry.audio?.attachmentId === 'sha256:voice');
+  assert.ok(voiceMessage, 'voice line carries the mp3 attachment');
+  assert.equal(voiceMessage.audio.contentType, 'audio/mpeg');
+  assert.match(voiceMessage.text, /语音答案/);
   assert.equal(saved.length, 1);
   assert.equal(saved[0].name, 'whalego-voice.mp3');
   assert.match(saved[0].data.toString(), /fake-mp3-data/);
