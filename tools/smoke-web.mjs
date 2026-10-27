@@ -131,7 +131,7 @@ async function turn(sessionId, text, { timeout = 90000 } = {}) {
     firstDeltaMs: lives.length ? lives[0].at : null,
     finalState: last.state ?? '',
     voice: String(last.voice ?? ''),
-    text: String(last.text ?? last.voice ?? ''),
+    text: String(last.text || last.voice || ''),
   };
 }
 
@@ -199,7 +199,7 @@ async function main() {
   }
 
   // 5. Audio really streams: first byte well before the last byte.
-  const audio = await speak('你好，我是悬浮球里的语音助手，这是一段流式合成测试。');
+  const audio = await speak(`你好，这是第 ${MARK} 号流式语音测试，用来确认音频是一边合成一边送出来的。`);
   record('streams audio', audio.ok && audio.bytes > 1000 && audio.firstByteMs !== null && audio.totalMs > audio.firstByteMs, `bytes=${audio.bytes} first=${audio.firstByteMs}ms total=${audio.totalMs}ms`);
 
   const report = { base, sessionId, mark: MARK, results, at: new Date().toISOString() };

@@ -74,12 +74,24 @@ dsh plugin --profile <profile> add /path/to/WhaleGo
 dsh <profile> --port 3100 --host 127.0.0.1 --no-open
 ```
 
-打开页面右下角（可拖动）的**悬浮球**：
+打开页面右下角的**悬浮球**，点一下就是语音空间：
 
-- 单击展开语音面板；再点收起。
-- 四种球：极光 / 声呐 / 像素鲸 / 极简，面板底部切换，位置与样式记在 localStorage。
-- 面板里可直接输入一句话启动真实语音回合；「打断」走 `/whalego/cancel`；每条语音带 ▶ 回放。
+- 全屏、沉浸式、深色极光背景；球是正圆，层级是内核 / 流体 / 光晕。
+- 点球开始聆听（Web Speech 实时转写），静音 1.4 秒自动发；不能收音的浏览器直接在中间输入框打字。
+- 回答一边生成一边出现（SSE `live` 事件），音频由 `/whalego/speak` 流式返回，播放在浏览器端完成。
+- 说话时点任意处或双击打断；结束显示「说完了，点一下继续」，再点球开始下一轮。
 - 自动选择最近一个**活着的**会话；没有就新开一个空会话，不会把话发给已断开的旧会话。
+- 球的位置记在 localStorage；左上角 × 收起语音空间。
+
+### 冒烟测试（真 key）
+
+```bash
+# 纯 web 半侧：真实答案、文字流、多轮、流中取消、音频流
+node tools/smoke-web.mjs http://127.0.0.1:3100 <token>
+
+# agent 半侧：真实工具写文件 + shell 统计
+node tools/smoke-agent.mjs node_modules/@deepseek-ai/dsh/lib/bin.js <profile> D:\dsh-go-lab
+```
 
 要求：
 
