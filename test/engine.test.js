@@ -193,7 +193,7 @@ test('replay: the finished line carries its mp3 attachment', async () => {
   };
   const { engine, prefs, appends } = makeHarness({ dshGo, attachments });
   prefs.mode = 'dual';
-  engine.ask({ draft: '帮我调查一下 2026 年 LLM 排行榜', sessionId: 's1' });
+  const effect = engine.ask({ draft: '帮我调查一下 2026 年 LLM 排行榜', sessionId: 's1' });
   await sleep(60);
   const voiceMessage = appends.find((entry) => entry.type === 'assistant/message');
   assert.equal(voiceMessage.data.message.content[0].audio.attachmentId, 'sha256:voice');
@@ -201,8 +201,10 @@ test('replay: the finished line carries its mp3 attachment', async () => {
   assert.equal(saved.length, 1);
   assert.equal(saved[0].name, 'whalego-voice.mp3');
   assert.match(saved[0].data.toString(), /fake-mp3-data/);
-  assert.deepEqual(streams[0].chunks.map(String), ['fake-mp3-data']);
-  assert.equal(streams[0].ended, true);
+  // The App shell has no audioStream player yet, so the persisted line falls
+  // back to the v1.2 media effect instead of opening a stream.
+  assert.equal(streams.length, 0);
+  assert.equal(effect.src, 'media:speech');
 });
 
 test('snapshot exposes the native seam as missing', () => {
