@@ -47,10 +47,10 @@ function fakeDocument() {
   };
 }
 
-test('client half exports apply and needs no injected service', () => {
+test('client half exports apply and asks for the slots service', () => {
   const { mod } = loadClient();
   assert.equal(typeof mod.apply, 'function');
-  assert.deepEqual(mod.inject, []);
+  assert.deepEqual(mod.inject, ['slots']);
 });
 
 test('apply is inert without a DOM (server side import)', () => {
