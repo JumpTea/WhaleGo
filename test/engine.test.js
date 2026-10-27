@@ -9,6 +9,9 @@ import { TranscriptStore } from '../lib/transcript.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Keep the voice registry out of the real ~/.dsh during tests.
+process.env.DSH_HOME = mkdtempSync(join(tmpdir(), 'whalego-engine-home-'));
+
 function makeHarness({ dshGo, attachments } = {}) {
   let engine;
   const dir = mkdtempSync(join(tmpdir(), 'whalego-engine-'));

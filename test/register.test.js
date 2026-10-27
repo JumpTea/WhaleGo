@@ -45,7 +45,7 @@ test('apply mounts panels, handlers, strip and the health route', () => {
   const handlers = new Map();
   const media = new Map();
   let capability;
-  let route;
+  const routes = [];
   let routeHandler;
   const dshGo = {
     panel(id, definition) {
@@ -80,9 +80,9 @@ test('apply mounts panels, handlers, strip and the health route', () => {
       return () => {};
     },
     webServer: {
-      register(definition, handler) {
-        route = definition;
-        routeHandler = handler;
+      register(definition) {
+        routes.push(definition);
+        if (definition.path === '/whalego/health') routeHandler = definition.handler;
         return () => {};
       },
     },
@@ -96,7 +96,9 @@ test('apply mounts panels, handlers, strip and the health route', () => {
   assert.ok(media.has('speech'));
   assert.equal(typeof capability, 'function');
   assert.ok(strips.has('whalego.status'));
-  assert.equal(route.path, '/whalego/health');
+  assert.ok(routes.some((registered) => registered.path === '/whalego/health'));
+  assert.ok(routes.some((registered) => registered.path === '/whalego/voices'));
+  assert.ok(routes.some((registered) => registered.path === '/whalego/voice-turn'));
 
   const settings = panels.get('whalego.settings').actions;
   const result = settings.mode({}, { value: 'dual' });
