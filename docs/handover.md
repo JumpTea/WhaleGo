@@ -164,6 +164,7 @@ audio.ended → finishJob → transcript done → idle
 | --- | --- | --- | --- |
 | `voiceLine` | `{ sessionId, lineId, role, text, final, audioRef, context, order }` | `Promise<void>` | 只写 `transcript`，面板显示；持久消息走 `session.append`，不依赖此方法 |
 | `audioStream` | `{ id, contentType, sampleRate, channels }` | `{ write, end, abort }` | **已接入**：TTS 分块直接写入；宿主无此能力时回退 `media` 整段 |
+| `attachments`（服务，非原生桥） | `saveFile({ data, name })` | `{ attachmentId, name, bytes }` | **已接入**：语音消息先 `saveFile` 再带 `audio.attachmentId` 落库；宿主没有该服务时不挂载插件（`inject: ['dshGo','attachments']`） |
 | `voice` | `{ sessionId, mode, language, vad, partial, onPartial, onFinal, … }` | `{ stop }` | 用原生点按 STT |
 | `orb` | `{ visible, style, size, idle, state, sessionId }` | `Promise<void>` | 只存偏好 |
 | `settings` | 设置 schema | `Promise<void>` | 面板自渲染 |
@@ -218,7 +219,7 @@ python tools/brand/make-brand.py
 - `media` 的完成信号依赖 App 的 `audio.ended`；没有时用 6 KB/s 的保守时长兜底，长音频可能提前标记完成。
 - 语音脑当前是 LLM 生成，不是语音识别；它拿到的是用户文字，不是麦克风音频。免手对话要等 `native.voice`。
 - 语音脑当前用独立 `llm.stream` + transcript 最近几轮，不在 DSH 会话上下文；`voiceTurn` 落地前，两脑上下文不一致。
-- TTS 已改为分块流式（`synthesizeStream` → `audioStream.write`），首块仍要等 Edge 连接与 `turn.start`（约 250–400 ms）；宿主没有 `audioStream` 时回退整段 `media`。
+- TTS 有两条路径：宿主没有附件服务时，`synthesizeStream` → `audioStream.write` 边合成边播（首块等 Edge 连接与 `turn.start`，约 250–400 ms）；有附件服务时，先整段 `synthesize`（约 1.2–1.4 s）并 `saveFile`，再带 `audio.attachmentId` 落库并分块写入 `audioStream`，换取可重放。宿主没有 `audioStream` 时回退整段 `media`。
 - 简单问题当前仍会跑文字脑（`#selectMode` 走 `read`）；目标 `voice-only` 尚未实现。
 - `appendVoiceLine` 当前传增量，契约要求全量；原生 `voiceLine` 落地前，面板/接缝显示可能重复或丢字。
 - 语音消息持久化已实现：插件在回合中 `session.append('assistant/message', {content:[{type:'voice'}]})`，真实会话顺序已实测；客户端是否渲染 `voice` 块仍取决于 App 侧支持。

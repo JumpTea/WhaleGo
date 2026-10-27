@@ -9,7 +9,7 @@ import { TranscriptStore } from '../lib/transcript.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function makeHarness({ dshGo } = {}) {
+function makeHarness({ dshGo, attachments } = {}) {
   let engine;
   const dir = mkdtempSync(join(tmpdir(), 'whalego-engine-'));
   const transcript = new TranscriptStore({ file: join(dir, 'transcript.json') });
@@ -58,6 +58,7 @@ function makeHarness({ dshGo } = {}) {
     },
     logger: { warn() {}, info() {} },
     dshGo,
+    ...(attachments ? { attachments } : {}),
   };
   const tts = {
     async synthesize(text) {
@@ -160,6 +161,47 @@ test('streaming: audioStream receives Edge chunks while the line is still being 
   assert.deepEqual(streams[0].chunks.map(String), ['p1', 'p2']);
   assert.equal(streams[0].ended, true);
   assert.equal(engine.diagnostics({}).native.audioStream, true);
+});
+
+test('replay: the finished line carries its mp3 attachment', async () => {
+  const streams = [];
+  const saved = [];
+  const dshGo = {
+    audioStream(init) {
+      const stream = {
+        init,
+        chunks: [],
+        ended: false,
+        async write(chunk) {
+          stream.chunks.push(Buffer.from(chunk));
+        },
+        async end() {
+          stream.ended = true;
+        },
+        async abort() {},
+      };
+      streams.push(stream);
+      return stream;
+    },
+  };
+  const attachments = {
+    async saveFile({ data, name }) {
+      saved.push({ data: Buffer.from(data), name });
+      return { attachmentId: 'sha256:voice', name, bytes: data.length };
+    },
+  };
+  const { engine, prefs, appends } = makeHarness({ dshGo, attachments });
+  prefs.mode = 'dual';
+  engine.ask({ draft: '帮我调查一下 2026 年 LLM 排行榜', sessionId: 's1' });
+  await sleep(60);
+  const voiceMessage = appends.find((entry) => entry.type === 'assistant/message');
+  assert.equal(voiceMessage.data.message.content[0].audio.attachmentId, 'sha256:voice');
+  assert.equal(voiceMessage.data.message.content[0].audio.contentType, 'audio/mpeg');
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].name, 'whalego-voice.mp3');
+  assert.match(saved[0].data.toString(), /fake-mp3-data/);
+  assert.deepEqual(streams[0].chunks.map(String), ['fake-mp3-data']);
+  assert.equal(streams[0].ended, true);
 });
 
 test('snapshot exposes the native seam as missing', () => {
