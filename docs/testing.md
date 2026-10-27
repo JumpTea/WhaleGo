@@ -56,14 +56,14 @@ node -e "import('./lib/tts/edge.js').then(async m => { const b = await m.synthes
 | --- | --- | --- | --- |
 | 插件挂载 | 假宿主 `--load` | 重启后按钮出现 | 必须 |
 | 双脑按需 | 当前单测覆盖 `dual` / `read`；`voice-only` 待补 | 简单问题只有一条语音消息，复杂问题两条消息 | 必须 |
-| 语音消息进会话并持久化 | 只能验 `transcript` 记录 | 需要 `native.voiceLine`；刷新、重进仍在 | 原生补齐后 |
-| 两条消息各自可复制 | 只能验记录顺序 | 需要 `voiceLine.order` 与独立消息 | 原生补齐后 |
+| 语音消息进会话并持久化 | 单测覆盖 `session.append`；真实 headless 已验证顺序与持久化 | 需要引擎投影补丁（否则下一轮适配器报 `unsupported`）；刷新后渲染待 App | 必须 |
+| 两条消息各自可复制 | 单测覆盖语音块 `context:false` 与独立消息 | 需要 App 渲染两条独立消息 | 必须 |
 | 实时转写 | 无 | 说话时草稿用户消息逐字更新，定稿一条 | 原生补齐后 |
 | 简单问题用户消息落库 | 只能验记录 | 需要 `native.voiceTurn` | 原生补齐后 |
 | 两脑同会话同上下文 | 只能验调用形状 | 需要 `native.voiceTurn` | 原生补齐后 |
 | 悬浮球（仅控制） | 只能验偏好保存 | 需要 `native.orb` | 原生补齐后 |
 | 插件设置 | 只能验面板 | 迁到 DSH 插件设置 schema（插件侧） | 必须 |
-| 流式音频 | 只能验整段 `media` | 需要 `native.audioStream` | 原生补齐后 |
+| 流式音频 | 假宿主单测：Edge 每块写入 `audioStream`、写完 `end`、abort 生效 | 需要 v1.3 桥接 + App 播放器 | 原生补齐后 |
 | 免手语音 | 只能验点按路径 | 需要 `native.voice` | 原生补齐后 |
 | 打断 | 单测 abort | 说话时 TTS 200 ms 内停 | 必须 |
 | 后台 | 无 | 麦克风 / TTS / 球暂停 | 必须 |

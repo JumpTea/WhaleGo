@@ -162,8 +162,8 @@ audio.ended → finishJob → transcript done → idle
 
 | 方法 | 参数 | 返回 | 当前降级 |
 | --- | --- | --- | --- |
-| `voiceLine` | `{ sessionId, lineId, role, text, final, audioRef, context, order }` | `Promise<void>` | 只写 `transcript`，面板显示 |
-| `audioStream` | `{ id, contentType, sampleRate, channels }` | `{ write, end, abort }` | 用 `media` 整段 |
+| `voiceLine` | `{ sessionId, lineId, role, text, final, audioRef, context, order }` | `Promise<void>` | 只写 `transcript`，面板显示；持久消息走 `session.append`，不依赖此方法 |
+| `audioStream` | `{ id, contentType, sampleRate, channels }` | `{ write, end, abort }` | **已接入**：TTS 分块直接写入；宿主无此能力时回退 `media` 整段 |
 | `voice` | `{ sessionId, mode, language, vad, partial, onPartial, onFinal, … }` | `{ stop }` | 用原生点按 STT |
 | `orb` | `{ visible, style, size, idle, state, sessionId }` | `Promise<void>` | 只存偏好 |
 | `settings` | 设置 schema | `Promise<void>` | 面板自渲染 |
@@ -218,12 +218,12 @@ python tools/brand/make-brand.py
 - `media` 的完成信号依赖 App 的 `audio.ended`；没有时用 6 KB/s 的保守时长兜底，长音频可能提前标记完成。
 - 语音脑当前是 LLM 生成，不是语音识别；它拿到的是用户文字，不是麦克风音频。免手对话要等 `native.voice`。
 - 语音脑当前用独立 `llm.stream` + transcript 最近几轮，不在 DSH 会话上下文；`voiceTurn` 落地前，两脑上下文不一致。
-- TTS 当前整段合成，不是按句流式；`audioStream` 落地前首声延迟大，长回答句间有空档。
+- TTS 已改为分块流式（`synthesizeStream` → `audioStream.write`），首块仍要等 Edge 连接与 `turn.start`（约 250–400 ms）；宿主没有 `audioStream` 时回退整段 `media`。
 - 简单问题当前仍会跑文字脑（`#selectMode` 走 `read`）；目标 `voice-only` 尚未实现。
 - `appendVoiceLine` 当前传增量，契约要求全量；原生 `voiceLine` 落地前，面板/接缝显示可能重复或丢字。
-- 语音消息持久化未实现：现在只写 `transcript.json` 并在「鲸语实录」面板显示；会话里的持久消息要等 `voiceLine`。
+- 语音消息持久化已实现：插件在回合中 `session.append('assistant/message', {content:[{type:'voice'}]})`，真实会话顺序已实测；客户端是否渲染 `voice` 块仍取决于 App 侧支持。
 - 实时转写未实现：说话时没有 partial，用户消息在说完后一次性写入；要等 `voiceInput`。
-- 文字答案与语音消息的上下顺序目前由 App 决定；原生 `voiceLine.order` 落地前，面板里只能按记录顺序展示。
+- 两条消息的上下顺序已由 append 时机保证（实测 seq：用户消息 → 语音 → 文字答案）；客户端渲染顺序待 App 支持。
 - 真机上的 Edge TTS 网络可用性未验证；失败会回退文字，不阻塞。
 
 ## 10. 下一步

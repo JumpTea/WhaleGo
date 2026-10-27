@@ -30,6 +30,8 @@ WhaleGo 把回答拆成按需启动的两条通道，两条都在**同一个 DSH
 4. 语音消息继续增长时，会把文字脑的答案往下推。两条消息都在会话消息列表里，同一层，都持久化、都能往回翻，不是字幕、弹幕或悬浮窗。
 
 > 当前 DSH-Go v1.2 还缺四项核心桥：持久化的会话内语音消息、流式音频、同会话语音回合（含「只落用户消息、不跑文字模型」），以及说话时的实时转写。悬浮球是控制入口、设置走插件页，不阻塞核心体验。`lib/nativeSeam.js` 已为 voiceLine / audioStream 留好探测；`voiceTurn` / `voiceInput` 的接缝与引擎切换待接。
+> 
+> 插件侧已接上 `audioStream`：`SpeechService.synthesizeStream()` 把 Edge 的每个音频块直接写进 `ctx.dshGo.audioStream()`，宿主没有该能力时回退到 v1.2 的 `media` 整段播放，行为不变。
 
 ## 交互原则
 
