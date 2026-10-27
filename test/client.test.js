@@ -40,15 +40,17 @@ function fakeDocument() {
   return {
     appended,
     documentElement: { dataset: {} },
+    head: { appendChild: () => {} },
     body: { appendChild: (node) => appended.push(node) },
-    createElement: (tag) => ({ tag, id: '', remove() {} }),
+    getElementById: () => null,
+    createElement: (tag) => ({ tag, id: '', textContent: '', remove() {} }),
   };
 }
 
-test('client half exports apply and the slots inject list', () => {
+test('client half exports apply and needs no injected service', () => {
   const { mod } = loadClient();
   assert.equal(typeof mod.apply, 'function');
-  assert.deepEqual(mod.inject, ['slots']);
+  assert.deepEqual(mod.inject, []);
 });
 
 test('apply is inert without a DOM (server side import)', () => {

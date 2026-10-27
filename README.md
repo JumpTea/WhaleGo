@@ -41,7 +41,7 @@ WhaleGo 把回答拆成按需启动的两条通道，两条都在**同一个 DSH
 - **悬浮球是控制入口，不是输出面。** 插件只声明样式、大小、待机和状态；像素、动画、位置都由 Flutter 绘制。语音文字永远不画在球上。
 - **设置不在球下面。** 所有开关都在插件页的「鲸语设置」里，点开即用。
 - **打断即停。** 停止按钮会同时停掉语音、音频流、取消文字脑的回合，并保留已经说出的内容。
-- **不伪造回合。** 用户的原问题由宿主正常写入会话；语音消息由插件用 `session.append('assistant/message', …)` 落一条只含 `voice` 块的持久消息（引擎在请求组装前投影掉该块），不伪造 turn/step/stream 生命周期。
+- **不伪造回合。** 用户的原问题由宿主正常写入会话；语音行保存在插件自己的注册表（`$DSH_HOME/whalego/voices.json`），由 Web UI 的悬浮球渲染与回放，绝不向会话日志写假的 `assistant/message`。
 
 ## 功能
 
@@ -66,6 +66,20 @@ git clone https://github.com/JumpTea/WhaleGo.git "$DSH_HOME/dsh-go/plugins/local
 ```
 
 然后在 DSH-Go 里重载插件（或重启宿主）。插件通过 `package.json` 的 `dshGo` 清单声明自己，App 只读取声明与 JSON 视图，不执行插件代码。
+
+### Web UI 版（不改 App，装到官方版本也能用）
+
+```bash
+dsh plugin --profile <profile> add /path/to/WhaleGo
+dsh <profile> --port 3100 --host 127.0.0.1 --no-open
+```
+
+打开页面右下角（可拖动）的**悬浮球**：
+
+- 单击展开语音面板；再点收起。
+- 四种球：极光 / 声呐 / 像素鲸 / 极简，面板底部切换，位置与样式记在 localStorage。
+- 面板里可直接输入一句话启动真实语音回合；「打断」走 `/whalego/cancel`；每条语音带 ▶ 回放。
+- 自动选择最近一个**活着的**会话；没有就新开一个空会话，不会把话发给已断开的旧会话。
 
 要求：
 
