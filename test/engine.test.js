@@ -16,6 +16,14 @@ function makeHarness() {
   const spoken = [];
   const prompts = [];
   const frames = [];
+  const appends = [];
+  const liveSession = {
+    id: 's1',
+    append(type, data, opts) {
+      appends.push({ type, data, opts });
+      return { seq: appends.length - 1 };
+    },
+  };
   const session = {
     async modelCatalog() {
       return { default: { provider: 'deepseek', model: 'chat' } };
@@ -45,6 +53,7 @@ function makeHarness() {
     get(name) {
       if (name === 'llm') return llm;
       if (name === 'sessionController') return session;
+      if (name === 'sessions') return { get: (id) => (id === 's1' ? liveSession : undefined) };
       return undefined;
     },
     logger: { warn() {}, info() {} },
@@ -58,11 +67,11 @@ function makeHarness() {
   };
   const prefs = { ...DEFAULT_PREFS };
   engine = new WhaleEngine({ ctx, prefs, transcript, tts, logger: ctx.logger });
-  return { engine, transcript, spoken, prompts, frames, prefs };
+  return { engine, transcript, spoken, prompts, frames, appends, prefs };
 }
 
 test('dual brain: voice line and text answer land in the transcript', async () => {
-  const { engine, transcript, spoken } = makeHarness();
+  const { engine, transcript, spoken, appends } = makeHarness();
   const effect = engine.ask({ draft: '帮我调查一下 2026 年 LLM 排行榜，并整理成表格', sessionId: 's1' });
   assert.equal(effect.type, 'audio');
   assert.equal(effect.src, 'media:speech');
@@ -71,6 +80,15 @@ test('dual brain: voice line and text answer land in the transcript', async () =
   assert.match(record.voice, /语音答案/);
   assert.match(record.text, /文字答案/);
   assert.ok(spoken.some((line) => line.includes('语音答案')));
+  const voiceMessage = appends.find((entry) => entry.type === 'assistant/message');
+  assert.ok(voiceMessage, 'voice message was persisted');
+  assert.equal(voiceMessage.data.message.content.length, 1);
+  assert.equal(voiceMessage.data.message.content[0].type, 'voice');
+  assert.match(voiceMessage.data.message.content[0].text, /语音答案/);
+  assert.equal(voiceMessage.data.message.content[0].order, 'before-text');
+  assert.equal(voiceMessage.data.message.content[0].context, false);
+  assert.equal(voiceMessage.data.message.content[0].final, true);
+  assert.deepEqual(voiceMessage.opts, { surfaceOp: 'append' });
   const media = await engine.media({}, { key: effect.key });
   assert.equal(media.body.toString(), 'fake-mp3-data');
   assert.equal(engine.status, 'speaking');
