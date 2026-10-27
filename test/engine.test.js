@@ -9,7 +9,7 @@ import { TranscriptStore } from '../lib/transcript.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function makeHarness() {
+function makeHarness({ dshGo } = {}) {
   let engine;
   const dir = mkdtempSync(join(tmpdir(), 'whalego-engine-'));
   const transcript = new TranscriptStore({ file: join(dir, 'transcript.json') });
@@ -57,10 +57,18 @@ function makeHarness() {
       return undefined;
     },
     logger: { warn() {}, info() {} },
+    dshGo,
   };
   const tts = {
     async synthesize(text) {
       spoken.push(text);
+      return { buffer: Buffer.from('fake-mp3-data'), contentType: 'audio/mpeg' };
+    },
+    async synthesizeStream(text, { onChunk, onStart } = {}) {
+      spoken.push(text);
+      onStart?.();
+      onChunk?.(Buffer.from('p1'));
+      onChunk?.(Buffer.from('p2'));
       return { buffer: Buffer.from('fake-mp3-data'), contentType: 'audio/mpeg' };
     },
     dispose() {},
@@ -116,6 +124,42 @@ test('stop aborts the active turn and marks the transcript', async () => {
   assert.equal(effect.op, 'stop');
   assert.equal(engine.status, 'interrupted');
   assert.equal(transcript.list('s1')[0].state, 'interrupted');
+});
+
+test('streaming: audioStream receives Edge chunks while the line is still being spoken', async () => {
+  const streams = [];
+  const dshGo = {
+    audioStream(init) {
+      const stream = {
+        init,
+        chunks: [],
+        ended: false,
+        aborted: false,
+        async write(chunk) {
+          stream.chunks.push(Buffer.from(chunk));
+        },
+        async end() {
+          stream.ended = true;
+        },
+        async abort() {
+          stream.aborted = true;
+        },
+      };
+      streams.push(stream);
+      return stream;
+    },
+  };
+  const { engine, prefs } = makeHarness({ dshGo });
+  prefs.mode = 'dual';
+  const effect = engine.ask({ draft: '帮我调查一下 2026 年 LLM 排行榜', sessionId: 's1' });
+  assert.equal(effect.src, 'stream:speech');
+  await sleep(60);
+  assert.equal(streams.length, 1);
+  assert.equal(streams[0].init.contentType, 'audio/mpeg');
+  assert.equal(streams[0].init.sampleRate, 24000);
+  assert.deepEqual(streams[0].chunks.map(String), ['p1', 'p2']);
+  assert.equal(streams[0].ended, true);
+  assert.equal(engine.diagnostics({}).native.audioStream, true);
 });
 
 test('snapshot exposes the native seam as missing', () => {
