@@ -54,6 +54,16 @@ await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.ph
 await page.waitForTimeout(700);
 console.log('SPEAKING', await state());
 
+// Collapse mid-answer, then reopen from the mini orb: the turn must survive.
+await page.locator('.wg-top button').click();
+await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.open === 'false');
+await page.waitForTimeout(250);
+console.log('COLLAPSED-SPEAKING', await state());
+await page.locator('.wg-mini').click();
+await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.open === 'true');
+await page.waitForTimeout(450);
+console.log('REOPENED-SPEAKING', await state());
+
 // Full orb while speaking: shrink to the chat, keep the voice going.
 await page.locator('.wg-orb').click({ force: true });
 await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.compact === 'true');
