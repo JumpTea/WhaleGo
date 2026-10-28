@@ -63,7 +63,7 @@
 - 球只用 `transform` / `opacity` 动画：`::before` 是云层，`@keyframes wg-sky` 做 1.03→1.09 缩放
   与 ±2% 平移，9s 一轮；聆听/说话/思考分别 5.6s / 4.2s / 7.4s。
 - 小球不是换一套布局，而是**同一颗球的连续位移**：`.wg-stage` 从居中
-  `translate3d(0, calc(50dvh - 214px), 0)` 下移，`.wg-orb` 同时 `scale(.5)`，两者共用
+  `translate3d(0, calc(50dvh - var(--wg-composer,140px) - 74px), 0)` 下移，`.wg-orb` 同时 `scale(.5)`，两者共用
   460ms `cubic-bezier(.4,.1,.2,1)`。视觉直径 27vw，中心从 49% 落到 76%，
   不改变布局盒，也不触发重排。
 - 语音页底部 `bottom: var(--wg-composer)`；`--wg-composer` 由插件每 500ms 重新测量
