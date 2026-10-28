@@ -104,7 +104,7 @@
 
 - `node --test`：**35/35**（含 player 预取、speaker 预热/停滞判定、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
-- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs` / `probe13.mjs` / `probe14.mjs` / `probe15.mjs`）：
+- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs` / `probe13.mjs` / `probe14.mjs` / `probe15.mjs` / `probe16.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；
   - 360×800 / 320×700：无横向溢出，slot 可点，composer 不被盖住；
   - 交互状态机：说话 → compact（继续播）→ 点球打断并聆听 → ☰ 收起 → 迷你球重开聆听 → 待命时点球 compact；
@@ -120,6 +120,8 @@
     另有 12s 无新帧且队列排空时的停滞判定，防止球永远停在「正在说」。
   - `probe14`：430×932 与 932×430 两种视口，球都完整落在语音页内；竖屏仍是 232/241，横屏收小到 125，不压输入条。
   - `probe15`：空首页开/关语音模式，卡片从 487 推到底 792，收起后回到 487 且 `data-whalego-mode=0`，不再把首页标题压在底部。
+  - `probe16`：同一会话连续两问，turnId 不同、两条提问都在原生聊天、无 pageerror。
+  - `probe5` 增补：收起态的迷你球随键盘收缩，600px 高时 mini y380–444、card 466、间距 22px。
 - 真机仍需用户确认：iOS Safari 的 Web Speech 授权与连续识别、真实网络下 Edge TTS 首句延迟。
 
 ### 6.1 手机验收清单（交给用户）

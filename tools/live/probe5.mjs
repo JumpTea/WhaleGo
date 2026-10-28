@@ -111,6 +111,27 @@ await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.op
 await page.waitForTimeout(300);
 console.log('COLLAPSED', await state());
 
+// While collapsed, the keyboard can shrink the visual viewport and grow the
+// composer; the mini orb must keep following the composer.
+await page.setViewportSize({ width: 430, height: 600 });
+await page.waitForTimeout(900);
+console.log(
+  'COLLAPSED-KEYBOARD',
+  await page.evaluate(() => {
+    const mini = document.querySelector('.wg-mini')?.getBoundingClientRect();
+    const slot = document.querySelector('.wg-slot');
+    const card = slot?.closest('[class*="card"]')?.getBoundingClientRect();
+    return {
+      mini: mini && { y: Math.round(mini.y), b: Math.round(mini.bottom), w: Math.round(mini.width) },
+      cardTop: card && Math.round(card.top),
+      gap: mini && card ? Math.round(card.top - mini.bottom) : null,
+      inset: getComputedStyle(document.getElementById('whalego-voice-host')).getPropertyValue('--wg-composer'),
+    };
+  }),
+);
+await page.setViewportSize({ width: 430, height: 932 });
+await page.waitForTimeout(900);
+
 // Mini orb reopens the full space and listens again.
 await page.locator('.wg-mini').click({ force: true });
 await page.waitForFunction(
