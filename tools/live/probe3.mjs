@@ -51,6 +51,12 @@ await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.op
 });
 
 // Collapse to the mini orb, leaving the native composer free.
+// An empty home now exits voice mode instead of leaving a mini orb, so put a
+// turn in the chat first: that is the state where the mini orb is expected.
+await page.evaluate(() => window.__whalegoSay('用一句话介绍你自己'));
+await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.phase === 'done', null, {
+  timeout: 60_000,
+});
 await page.locator('.wg-top button').first().click();
 await page.waitForFunction(
   () =>
