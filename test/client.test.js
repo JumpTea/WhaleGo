@@ -121,6 +121,29 @@ test('speaker queues segments in order and settles only after the last line', as
   assert.deepEqual(reports, ['ended']);
 });
 
+test('speaker flags a drained queue that never finished generating', async () => {
+  const { window } = loadClient();
+  const reports = [];
+  const speaker = window.__whalegoInternals.createSpeaker({
+    play: async () => 'ended',
+    report: (state) => reports.push(state),
+    phase: () => {},
+  });
+
+  speaker.accept({ speech: [{ id: 't:0', text: '半句。' }], generationDone: false });
+  await tick();
+  await tick();
+  // The queue is empty but the stream never sent generationDone: the UI can
+  // treat this as a dead stream instead of speaking forever.
+  assert.equal(speaker.stalled(), true);
+  assert.deepEqual(reports, []);
+
+  speaker.finish();
+  await tick();
+  assert.equal(speaker.stalled(), false);
+  assert.deepEqual(reports, ['ended']);
+});
+
 test('speaker reports nothing when the turn is stopped mid-sentence', async () => {
   const { window } = loadClient();
   const lines = [];

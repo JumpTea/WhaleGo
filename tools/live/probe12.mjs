@@ -66,11 +66,11 @@ await page.goto(url, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('.wg-slot', { timeout: 30_000 });
 await page.locator('.wg-slot').click();
 await page.waitForFunction(
-  () => document.querySelector('.wg-space')?.dataset.phase === 'thinking',
+  () => Boolean(document.querySelector('.wg-error')?.innerText),
   null,
   { timeout: 15_000 },
 );
-await page.waitForTimeout(2500);
+await page.waitForTimeout(300);
 console.log('AFTER-DROP', await state());
 await page.screenshot({ path: 'shots-v6/stream-error.png' });
 await page.locator('.wg-orb').click({ force: true });
