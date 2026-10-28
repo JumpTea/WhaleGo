@@ -59,6 +59,7 @@ await page.locator('.wg-top button').click();
 await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.open === 'false');
 await page.waitForTimeout(250);
 console.log('COLLAPSED-SPEAKING', await state());
+await page.screenshot({ path: 'shots-v6/collapsed-mini.png' });
 await page.locator('.wg-mini').click();
 await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.open === 'true');
 await page.waitForTimeout(450);
