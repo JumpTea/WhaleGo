@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+  body{margin:0;background:#f7f7f5;display:flex;gap:24px;padding:24px;flex-wrap:wrap}
+  .orb{width:232px;height:232px;border-radius:50%;overflow:hidden;position:relative}
+  svg{display:block;width:100%;height:100%}
+  .cap{font:12px/1.4 sans-serif;color:#555;width:232px;margin-top:-14px}
+</style>
+</head>
+<body>
+  <div>
+    <div class="orb">
+      <svg viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5b7cf2"/><stop offset="0.26" stop-color="#6f8ef4"/>
+            <stop offset="0.44" stop-color="#9fb8f9"/><stop offset="0.6" stop-color="#dbe6ff"/>
+            <stop offset="0.8" stop-color="#fff"/>
+          </linearGradient>
+          <filter id="c1" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.004 0.011" numOctaves="4" seed="11" result="n"/>
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 2.1 -0.78"/>
+            <feGaussianBlur stdDeviation="2.8"/>
+          </filter>
+          <linearGradient id="f1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0.12" stop-color="#000"/><stop offset="0.34" stop-color="#fff"/>
+            <stop offset="0.7" stop-color="#fff"/><stop offset="0.88" stop-color="#000"/>
+          </linearGradient>
+          <mask id="m1"><rect width="400" height="400" fill="url(#f1)"/></mask>
+        </defs>
+        <rect width="400" height="400" fill="url(#sky1)"/>
+        <rect width="400" height="400" filter="url(#c1)" mask="url(#m1)" opacity="0.95"/>
+      </svg>
+    </div>
+    <div class="cap">A1 large soft</div>
+  </div>
+
+  <div>
+    <div class="orb">
+      <svg viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5b7cf2"/><stop offset="0.26" stop-color="#6f8ef4"/>
+            <stop offset="0.44" stop-color="#9fb8f9"/><stop offset="0.6" stop-color="#dbe6ff"/>
+            <stop offset="0.8" stop-color="#fff"/>
+          </linearGradient>
+          <filter id="big2" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.004 0.008" numOctaves="3" seed="7" result="n"/>
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 2.4 -0.95"/>
+            <feGaussianBlur stdDeviation="6"/>
+          </filter>
+          <filter id="det2" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="4" seed="3" result="n"/>
+            <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 2.2 -0.9"/>
+            <feGaussianBlur stdDeviation="1.4"/>
+          </filter>
+          <linearGradient id="f2" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0.1" stop-color="#000"/><stop offset="0.32" stop-color="#fff"/>
+            <stop offset="0.72" stop-color="#fff"/><stop offset="0.9" stop-color="#000"/>
+          </linearGradient>
+          <mask id="m2"><rect width="400" height="400" fill="url(#f2)"/></mask>
+        </defs>
+        <rect width="400" height="400" fill="url(#sky2)"/>
+        <rect width="400" height="400" filter="url(#big2)" mask="url(#m2)" opacity="0.7"/>
+        <rect width="400" height="400" filter="url(#det2)" mask="url(#m2)" opacity="0.35"/>
+      </svg>
+    </div>
+    <div class="cap">A2 two layers</div>
+  </div>
+
+  <div>
+    <div class="orb">
+      <svg viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5b7cf2"/><stop offset="0.26" stop-color="#6f8ef4"/>
+            <stop offset="0.44" stop-color="#9fb8f9"/><stop offset="0.6" stop-color="#dbe6ff"/>
+            <stop offset="0.8" stop-color="#fff"/>
+          </linearGradient>
+          <filter id="c3" x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.006 0.014" numOctaves="5" seed="23" result="n"/>
+            <feComponentTransfer in="n" result="t">
+              <feFuncA type="linear" slope="2.4" intercept="-1.05"/>
+            </feComponentTransfer>
+            <feColorMatrix in="t" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0"/>
+            <feGaussianBlur stdDeviation="2"/>
+          </filter>
+          <linearGradient id="f3" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0.14" stop-color="#000"/><stop offset="0.36" stop-color="#fff"/>
+            <stop offset="0.72" stop-color="#fff"/><stop offset="0.9" stop-color="#000"/>
+          </linearGradient>
+          <mask id="m3"><rect width="400" height="400" fill="url(#f3)"/></mask>
+        </defs>
+        <rect width="400" height="400" fill="url(#sky3)"/>
+        <rect width="400" height="400" filter="url(#c3)" mask="url(#m3)" opacity="0.92"/>
+      </svg>
+    </div>
+    <div class="cap">A3 thresholded</div>
+  </div>
+
+  <div>
+    <div class="orb" style="background-image:
+      radial-gradient(56% 20% at 38% 42%, rgba(255,255,255,.9), transparent 70%),
+      radial-gradient(44% 16% at 66% 38%, rgba(255,255,255,.85), transparent 72%),
+      radial-gradient(80% 24% at 48% 56%, rgba(255,255,255,.98), transparent 74%),
+      linear-gradient(180deg,#5b7cf2 0%,#7392f5 22%,#b3c8fb 42%,#e6eeff 58%,#fff 78%)"></div>
+    <div class="cap">CSS gradients</div>
+  </div>
+</body>
+</html>

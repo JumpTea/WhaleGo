@@ -144,6 +144,88 @@ test('speaker reports nothing when the turn is stopped mid-sentence', async () =
   assert.deepEqual(lines, ['第一句。']);
 });
 
+test('player reuses audio prefetched for the next sentence', async () => {
+  const { window } = loadClient();
+  const made = [];
+  let fetches = 0;
+  class FakeAudio {
+    constructor() {
+      this.handlers = {};
+      this.currentTime = 0;
+      made.push(this);
+    }
+    addEventListener(name, fn) {
+      (this.handlers[name] ??= []).push(fn);
+    }
+    play() {
+      return Promise.resolve();
+    }
+    pause() {}
+    emit(name) {
+      for (const fn of this.handlers[name] ?? []) fn();
+    }
+  }
+  const real = {
+    Audio: globalThis.Audio,
+    fetch: globalThis.fetch,
+    createObjectURL: URL.createObjectURL,
+    revokeObjectURL: URL.revokeObjectURL,
+  };
+  globalThis.Audio = FakeAudio;
+  globalThis.fetch = async () => {
+    fetches += 1;
+    return { ok: true, body: {}, blob: async () => new Uint8Array([1, 2, 3]) };
+  };
+  URL.createObjectURL = () => 'blob:warm';
+  URL.revokeObjectURL = () => {};
+  try {
+    const player = window.__whalegoInternals.createPlayer();
+    await player.prepare('第二句。');
+    assert.equal(fetches, 1);
+    const pending = player.play('第二句。');
+    await tick();
+    assert.equal(fetches, 1, 'no second request for a warmed line');
+    assert.equal(made.length, 1);
+    assert.equal(made[0].src, 'blob:warm');
+    made[0].emit('ended');
+    assert.equal(await pending, 'ended');
+  } finally {
+    globalThis.Audio = real.Audio;
+    globalThis.fetch = real.fetch;
+    URL.createObjectURL = real.createObjectURL;
+    URL.revokeObjectURL = real.revokeObjectURL;
+  }
+});
+
+test('speaker warms the next line before the current one ends', async () => {
+  const { window } = loadClient();
+  const lines = [];
+  const prepared = [];
+  const gates = [];
+  const speaker = window.__whalegoInternals.createSpeaker({
+    play: (line) => {
+      lines.push(line);
+      return new Promise((resolve) => gates.push(resolve));
+    },
+    prepare: (line) => prepared.push(line),
+    report: () => {},
+    phase: () => {},
+  });
+  speaker.accept({
+    speech: [
+      { id: 't:0', text: '第一句。' },
+      { id: 't:1', text: '第二句。' },
+    ],
+    generationDone: true,
+  });
+  await tick();
+  assert.deepEqual(lines, ['第一句。']);
+  assert.deepEqual(prepared, ['第二句。']);
+  gates.shift()('ended');
+  await tick();
+  assert.deepEqual(lines, ['第一句。', '第二句。']);
+});
+
 test('player resolves only once the audio really ends', async () => {
   const { window } = loadClient();
   const made = [];

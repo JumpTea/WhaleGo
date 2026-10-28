@@ -1,0 +1,10 @@
+﻿import { readFileSync, writeFileSync } from "node:fs";
+const path = "lib/client.js";
+let source = readFileSync(path, "utf8");
+const css = readFileSync("tools/live/new-light.css", "utf8").trimEnd();
+const start = source.indexOf("/* ---- light full-screen voice page");
+const end = source.indexOf("`;", start);
+if (start < 0 || end < 0) throw new Error("markers not found");
+source = source.slice(0, start) + css + "\n" + source.slice(end);
+writeFileSync(path, source);
+console.log("replaced", end - start, "chars with", css.length);
