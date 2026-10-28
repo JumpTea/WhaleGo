@@ -63,6 +63,8 @@
 ## 5. 验收
 
 - `node --test` 全绿。
+- 回执链路（`node tools/check-playback.mjs`）：把 8 条路由挂到真 HTTP 服务 + 桩语音脑，验证
+  SSE 分句下发、回合在回执前保持 `speaking`、回执后落定 `done`、重复回执与跨会话回执被拒。
 - 真 key 冒烟（`tools/smoke-web.mjs`）：多轮、工具（读文件）、文件写入、流中取消，四项全过。
 - CDP 截图：全屏空间、聆听、思考、说话四个状态各一张；球不遮挡文字。
 - 模拟器内 dsh-go WebUI 打开同一页面，面板可用。
