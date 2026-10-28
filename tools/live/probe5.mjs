@@ -143,4 +143,10 @@ console.log('COMPACT-AGAIN-LISTEN', await state());
 
 await page.screenshot({ path: 'shots-v6/final-listening.png' });
 
+// The native X is the only way to end voice mode.
+await page.locator('.wg-slot').click();
+await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.open === 'false');
+await page.waitForTimeout(300);
+console.log('ENDED', await state());
+
 await browser.close();

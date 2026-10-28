@@ -60,10 +60,12 @@
   `lib/client.js` 的 `ORB_SKY`），保证低端机也不掉帧。
   - 生成：`tools/live/orb.html` + `orbgen.mjs`（Edge headless canvas → `toDataURL('image/webp',0.92)`）；
   - 回填：`tools/live/embed-orb.mjs` 用正则替换 `const ORB_SKY = "…";`，可重复跑。
-- 球只用 `transform` / `opacity` 动画：`::before` 是云层，`@keyframes wg-sky` 做 1.015→1.05 缩放
-  与几像素平移，9s 一轮；聆听/说话/思考分别 5.6s / 4.2s / 7.4s。
-- 小球用 `transform: scale(.5); transform-origin: 50% 100%` 锚定底部，视觉直径 27vw，
-  不改变布局盒，因此不会触发重排。
+- 球只用 `transform` / `opacity` 动画：`::before` 是云层，`@keyframes wg-sky` 做 1.03→1.09 缩放
+  与 ±2% 平移，9s 一轮；聆听/说话/思考分别 5.6s / 4.2s / 7.4s。
+- 小球不是换一套布局，而是**同一颗球的连续位移**：`.wg-stage` 从居中
+  `translate3d(0, calc(50dvh - 214px), 0)` 下移，`.wg-orb` 同时 `scale(.5)`，两者共用
+  460ms `cubic-bezier(.4,.1,.2,1)`。视觉直径 27vw，中心从 49% 落到 76%，
+  不改变布局盒，也不触发重排。
 - 语音页底部 `bottom: var(--wg-composer)`；`--wg-composer` 由插件每 500ms 重新测量
   DSH composer 卡片的 `top` 得出（`innerHeight - top + 6px`），会话切换、键盘弹起、
   输入框长高都能跟上，永远不会盖住原生输入条。
@@ -102,11 +104,13 @@
 
 - `node --test`：**34/34**（含 player 预取、speaker 预热、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
-- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs`）：
+- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；
   - 360×800 / 320×700：无横向溢出，slot 可点，composer 不被盖住；
   - 交互状态机：说话 → compact（继续播）→ 点球打断并聆听 → ☰ 收起 → 迷你球重开聆听 → 待命时点球 compact；
-  - 入场 483ms / 收起 451ms，帧间隔最大 90ms；键盘态 600px 高时 space 底 454、card 顶 460（6px 缝）；
+    说话中收起再重开，回合与音频都保留，不会起第二个识别器；
+  - 入场 458–483ms / 收起 433–451ms，帧间隔最大 80–90ms；键盘态 600px 高时 space 底 454、card 顶 460（6px 缝）；
+  - Web Speech：假识别器给出 partial 时球下显示实时转写；final 后 1.4s 静音自动发，原生聊天出现问题与回答；
   - typed：全屏时在原生输入框打字 → 自动 compact、聊天出现完整回答、朗读该回答。
 - 真机仍需用户确认：iOS Safari 的 Web Speech 授权与连续识别、真实网络下 Edge TTS 首句延迟。
 
