@@ -245,7 +245,7 @@ python tools/brand/make-brand.py
 
 - 输入条活动区注入 32px 麦克风圆钮；点开从底部滑出浅色全屏语音页（460ms，只动 transform/opacity），
   顶部仅 38px ☰，原生输入条始终在下方可用；页面底边由每 500ms 复测的 composer card top 决定。
-- 云朵球为离线烘焙的 1024×1024 WebP（`ORB_SKY`，约 11.5KB base64），`clamp(168px,54vw,300px)`，
+- 云朵球为离线烘焙的 1024×1024 WebP（`ORB_SKY`，约 11.5KB，base64 后约 15KB），`clamp(168px,54vw,300px)`，
   云层只有缩放/平移；无状态文字、无同心环。
 - 聆听（Web Speech zh-CN，1.4s 静音自动发）、思考、逐句说话、全屏点球缩成小球露聊天、点空白打断、☰ 收起留 64px 迷你球、
   原生 ✕ 结束，全部实测通过。
