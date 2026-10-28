@@ -249,14 +249,16 @@ python tools/brand/make-brand.py
   云层只有缩放/平移；无状态文字、无同心环。
 - 聆听（Web Speech zh-CN，1.4s 静音自动发）、思考、逐句说话、任意点球打断/缩球、☰ 收起留 64px 迷你球、
   原生 ✕ 结束，全部实测通过。
-- compact：球 `scale(.5)` 且 `transform-origin:50% 100%` 锚底，视觉 27vw，原生聊天可点可滚；
-  底部 210px 白色渐隐；点小球回全屏并在说话时 cancel+重听。
+- compact：`.wg-stage` 从居中 `translateY(calc(50dvh - composer - 74px))` 下移、球同时 `scale(.5)`，
+  460ms 同一曲线；视觉 27vw，原生聊天可点可滚；底部 210px 白色渐隐；点小球回全屏并在说话时 cancel+重听。
 - 语音回合走真实会话：`TextBrain.prompt` → 140ms 轮询 `snapshot` → 分句 `#captureSpeech` → SSE；
   浏览器排空队列且 `generationDone` 才回报 `playback ended`。没有 `prompt` 的宿主自动回退独立语音脑。
 - 客户端预取：当前句播放时 `prepare(next)`，实测句间 `ended→playing` 8–22ms。
 - typed：原生输入框打字 → 自动 compact、朗读 agent 回答、聊天里保留完整文字。
-- 验证：`node --test` 34/34；`tools/live/probe2/3/5/6.mjs` 覆盖 430/360/320 宽、入场时长、
-  打断/收起/重开、typed；`tools/check-playback.mjs` 11 项回执链路。
+- 验证：`node --test` 34/34；`tools/live/probe2/3/5/6/8/9.mjs` 覆盖 430/360/320 宽、入场时长、
+  打断/收起/重开、说话中结束、Web Speech 实时转写与自动发送、typed；`tools/check-playback.mjs` 11 项回执链路。
+- 推送注意：本机 `credential.helper` 全局先命中 Git Credential Manager，无缓存时会卡住；
+  用 `git -c credential.helper= -c credential.helper=store push origin main` 走 `~/.git-credentials`。
 
 ### 待办
 

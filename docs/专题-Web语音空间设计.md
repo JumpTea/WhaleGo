@@ -104,11 +104,11 @@
 
 - `node --test`：**34/34**（含 player 预取、speaker 预热、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
-- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs`）：
+- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；
   - 360×800 / 320×700：无横向溢出，slot 可点，composer 不被盖住；
   - 交互状态机：说话 → compact（继续播）→ 点球打断并聆听 → ☰ 收起 → 迷你球重开聆听 → 待命时点球 compact；
-    说话中收起再重开，回合与音频都保留，不会起第二个识别器；
+    说话中收起再重开，回合与音频都保留，不会起第二个识别器；说话中点原生 ✕，音频停止、迷你球消失；
   - 入场 458–483ms / 收起 433–451ms，帧间隔最大 80–90ms；键盘态 600px 高时 space 底 454、card 顶 460（6px 缝）；
   - Web Speech：假识别器给出 partial 时球下显示实时转写；final 后 1.4s 静音自动发，原生聊天出现问题与回答；
   - typed：全屏时在原生输入框打字 → 自动 compact、聊天出现完整回答、朗读该回答。
