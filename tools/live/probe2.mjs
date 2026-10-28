@@ -21,6 +21,14 @@ const logs = [];
 page.on('console', (message) => logs.push(`[console:${message.type()}] ${message.text()}`));
 page.on('pageerror', (error) => logs.push(`[pageerror] ${error.message}`));
 
+// Playwright's locator.click() can stall on the native composer button while
+// the composer is being pushed down; tapping the box directly matches a user.
+const press = async (selector) => {
+  const box = await page.locator(selector).first().boundingBox();
+  if (!box) throw new Error(`no box for ${selector}`);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+};
+
 await page.addInitScript(() => {
   class FakeRecognition {
     constructor() {
@@ -82,7 +90,7 @@ await page.waitForSelector('.wg-slot', { timeout: 60_000 });
 await page.waitForTimeout(800);
 console.log('CLOSED', JSON.stringify(await state(), null, 2));
 
-await page.locator('.wg-slot').click();
+await press('.wg-slot');
 await page.waitForTimeout(1200);
 console.log('FULL', JSON.stringify(await state(), null, 2));
 await page.screenshot({ path: 'shots-v5/01-full.png' });
@@ -103,7 +111,7 @@ console.log('SPEAKING?', sawSpeaking);
 await page.screenshot({ path: 'shots-v5/02-speaking.png' });
 
 // Tap the orb while it talks: shrink it, keep the audio running.
-await page.locator('.wg-orb').click();
+await press('.wg-orb');
 await page.waitForTimeout(700);
 console.log('COMPACT', JSON.stringify(await state(), null, 2));
 await page.screenshot({ path: 'shots-v5/03-compact.png' });
@@ -120,9 +128,9 @@ for (let i = 0; i < 40; i += 1) {
 await page.screenshot({ path: 'shots-v5/04-compact-done.png' });
 
 // Expand and end through the native crossing button.
-await page.locator('.wg-orb').click();
+await press('.wg-orb');
 await page.waitForTimeout(600);
-await page.locator('.wg-slot').click();
+await press('.wg-slot');
 await page.waitForTimeout(800);
 console.log('ENDED', JSON.stringify(await state(), null, 2));
 
