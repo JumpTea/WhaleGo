@@ -177,7 +177,7 @@ audio.ended → finishJob → transcript done → idle
 
 ```bash
 cd WhaleGo
-node --test                 # 8 项单测
+node --test                 # 33 项单测
 node --check lib/index.js   # 语法
 ```
 
@@ -236,3 +236,31 @@ python tools/brand/make-brand.py
 5. 真机跑第 7 节验收，记录到 `docs/testing.md`。
 6. 宣传片已出片；改版时改 `film/src/Promo.tsx` 与 `film/public/audio/`，重渲染序列、跑 `tools/promo/mix-audio-48.py`、再 mux。
 7. 发布 `0.1.0`：打 tag、写 release notes、附社交预览图与 48 秒成片。
+
+## 11. Web UI 半侧（2026-10-29）
+
+这一节替代上面「原生接缝」在 Web 上的部分；原生 App 侧的问题仍以 §9 为准。
+
+### 已落地
+
+- 输入条活动区注入 32px 麦克风圆钮；点开从底部滑出浅色全屏语音页（460ms，只动 transform/opacity），
+  顶部仅 38px ☰，原生输入条始终在下方可用；页面底边由每 500ms 复测的 composer card top 决定。
+- 云朵球为离线烘焙的 1024×1024 WebP（`ORB_SKY`，约 11.5KB base64），`clamp(168px,54vw,300px)`，
+  云层只有缩放/平移；无状态文字、无同心环。
+- 聆听（Web Speech zh-CN，1.4s 静音自动发）、思考、逐句说话、任意点球打断/缩球、☰ 收起留 64px 迷你球、
+  原生 ✕ 结束，全部实测通过。
+- compact：球 `scale(.5)` 且 `transform-origin:50% 100%` 锚底，视觉 27vw，原生聊天可点可滚；
+  底部 210px 白色渐隐；点小球回全屏并在说话时 cancel+重听。
+- 语音回合走真实会话：`TextBrain.prompt` → 140ms 轮询 `snapshot` → 分句 `#captureSpeech` → SSE；
+  浏览器排空队列且 `generationDone` 才回报 `playback ended`。没有 `prompt` 的宿主自动回退独立语音脑。
+- 客户端预取：当前句播放时 `prepare(next)`，实测句间 `ended→playing` 8–22ms。
+- typed：原生输入框打字 → 自动 compact、朗读 agent 回答、聊天里保留完整文字。
+- 验证：`node --test` 33/33；`tools/live/probe2/3/5/6.mjs` 覆盖 430/360/320 宽、入场时长、
+  打断/收起/重开、typed；`tools/check-playback.mjs` 11 项回执链路。
+
+### 待办
+
+- 真机（iOS Safari / Android Chrome）确认 Web Speech 授权、连续识别与 Edge TTS 首句延迟。
+- 打字回合目前整轮完成后一次朗读，未逐句流式；如需流式，要把 typed 回合也接 `#captureSpeech`。
+- 极长回答的最后几行仍可能落在小球后（DSH 虚拟列表不可安全改）；靠滚动阅读。
+- 发布版本号从 0.2.0 起（本次 WebUI 定稿），tag 与 release notes 待用户确认。

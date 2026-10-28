@@ -11,16 +11,24 @@ function deferred() {
   return { promise, resolve };
 }
 
-function harness(t, { stream, synthesize } = {}) {
+function harness(t, { stream, synthesize, prompt } = {}) {
   const transcript = new TranscriptStore();
   const cancellations = [];
+  const prompts = [];
+  const session = {
+    async modelCatalog() { return { default: { provider: 'test', model: 'voice' } }; },
+    async cancel(request) { cancellations.push(request); },
+  };
+  if (prompt) {
+    session.prompt = async (request) => {
+      prompts.push(request);
+      return prompt(request);
+    };
+  }
   const ctx = {
     get(name) {
       if (name === 'llm') return { stream: stream ?? (async function* () { yield { type: 'text-delta', text: '这是语音回答。' }; }) };
-      if (name === 'sessionController') return {
-        async modelCatalog() { return { default: { provider: 'test', model: 'voice' } }; },
-        async cancel(request) { cancellations.push(request); },
-      };
+      if (name === 'sessionController') return session;
     },
   };
   const engine = new WhaleEngine({
@@ -29,7 +37,7 @@ function harness(t, { stream, synthesize } = {}) {
     logger: { warn() {}, info() {} },
   });
   t.after(() => engine.dispose());
-  return { engine, transcript, cancellations };
+  return { engine, transcript, cancellations, prompts };
 }
 
 async function until(predicate) {
@@ -58,6 +66,34 @@ test('web voice exposes a complete clause while generation is still pending', as
   const final = engine.live(effect.key);
   assert.deepEqual(final.speech.map((part) => part.text), ['我想想。', '这是后续回答']);
   assert.equal(new Set(final.speech.map((part) => part.id)).size, 2);
+});
+
+test('web voice asks the real session agent and speaks its stream', async (t) => {
+  const { engine, prompts } = harness(t, { prompt: async () => {} });
+  const effect = engine.ask({ sessionId: 's1', draft: '你好' });
+  await until(() => prompts.length === 1);
+  assert.deepEqual(prompts[0].content, [{ type: 'text', text: '你好' }]);
+  assert.equal(prompts[0].sessionId, 's1');
+
+  engine.onAssistantFrame('s1', { type: 'start', turn: 't1' });
+  engine.onAssistantFrame('s1', {
+    type: 'chunk',
+    turn: 't1',
+    chunk: { type: 'text-delta', text: '第一句。第二句。' },
+  });
+  // The 140ms poll is what turns the partial Session text into speech early.
+  await new Promise((resolve) => setTimeout(resolve, 240));
+  const early = engine.live(effect.key);
+  assert.deepEqual(early.speech.map((part) => part.text), ['第一句。', '第二句。']);
+  assert.equal(early.generationDone, false);
+
+  engine.onSessionEvent('s1', { type: 'turn/end', reason: 'completed' });
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  const final = engine.live(effect.key);
+  assert.equal(final.generationDone, true);
+  assert.equal(final.state, 'speaking');
+  assert.equal(engine.completePlayback({ sessionId: 's1', turnId: effect.key, state: 'ended' }), true);
+  assert.equal(engine.live(effect.key).state, 'done');
 });
 
 test('composer turns keep separate IDs and preserve both transcript entries', (t) => {

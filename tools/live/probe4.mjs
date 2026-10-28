@@ -5,7 +5,6 @@ const url = process.argv[2];
 const browser = await chromium.launch({
   executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
   headless: true,
-  args: ['--autoplay-policy=no-user-gesture-required'],
 });
 const context = await browser.newContext({
   viewport: { width: 430, height: 932 },

@@ -31,8 +31,14 @@ const state = () =>
       compact: space?.dataset.compact,
       phase: space?.dataset.phase,
       slot: document.querySelector('.wg-slot')?.innerText,
+      href: location.href,
+      bound: window.__whalegoSession?.(),
+      turn: window.__whalegoLastTurn,
       mini: Boolean(document.querySelector('.wg-mini')),
       audio: window.__whalegoAudio,
+      space: document.querySelector('.wg-space')?.getBoundingClientRect().toJSON(),
+      stage: document.querySelector('.wg-stage')?.getBoundingClientRect().toJSON(),
+      orbRect: document.querySelector('.wg-orb')?.getBoundingClientRect().toJSON(),
       chat: (document.querySelector('[class*="scrollBody"]')?.innerText || '').slice(-300),
     };
   });
@@ -82,6 +88,22 @@ await page
   .catch(() => {});
 console.log('TYPED-SPEAKING', await state());
 await page.screenshot({ path: 'shots-v6/typed-speaking.png' });
+
+// The big orb returns to the full page; the composer underneath stays usable.
+await page.locator('.wg-orb').click({ force: true });
+await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.compact === 'false', null, {
+  timeout: 5_000,
+});
+const input2 = page.locator('[contenteditable="true"]').first();
+await input2.click();
+await input2.type('再说一句', { delay: 12 });
+await input2.press('Enter');
+await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.compact === 'true', null, {
+  timeout: 20_000,
+});
+console.log('TYPED-FROM-FULL', await state());
+await page.waitForTimeout(800);
+await page.screenshot({ path: 'shots-v6/typed-from-full.png' });
 
 await browser.close();
 console.log('LOGS', logs.slice(-12));

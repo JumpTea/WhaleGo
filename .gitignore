@@ -18,6 +18,9 @@ assets/promo/whalego-promo-audio.wav
 *.bak
 artifacts/
 docs/对话纪要.md
+shots-*/
+tools/live/shots-*/
+tools/live/orb-candidates.png
 
 film/node_modules/
 film/out/
