@@ -104,7 +104,7 @@
 
 - `node --test`：**34/34**（含 player 预取、speaker 预热、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
-- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs`）：
+- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；
   - 360×800 / 320×700：无横向溢出，slot 可点，composer 不被盖住；
   - 交互状态机：说话 → compact（继续播）→ 点球打断并聆听 → ☰ 收起 → 迷你球重开聆听 → 待命时点球 compact；
@@ -114,6 +114,8 @@
   - typed：全屏时在原生输入框打字 → 自动 compact、聊天出现完整回答、朗读该回答。
   - `probe10`：原生输入框被多行文字撑高时，语音页底部跟着上移，球始终在输入条上方约 23px。
   - `probe11`：模拟麦克风 `not-allowed`，球下给出中文提示、phase 回 idle，✕ 仍在，可直接打字。
+  - `probe12`：掐断 `/whalego/live`，球下提示「语音流断了，请再点一次球重试。」、phase 回 idle，
+    同时取消后端回合；点球重试回到聆听、提示消失。
 - 真机仍需用户确认：iOS Safari 的 Web Speech 授权与连续识别、真实网络下 Edge TTS 首句延迟。
 
 ### 6.1 手机验收清单（交给用户）
