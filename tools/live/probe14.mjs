@@ -74,6 +74,25 @@ for (const viewport of [
   const fits = box.orb && box.space ? box.orb.b <= box.space.b && box.orb.y >= 0 : false;
   console.log(viewport.name.toUpperCase(), { ...box, fits });
   await page.screenshot({ path: `shots-v6/${viewport.name}-${viewport.width}x${viewport.height}.png` });
+
+  // Exercise the compact CSS without waiting for a whole turn: the layout is
+  // what matters here, and a forced attribute is enough to measure it.
+  await page.evaluate(() => {
+    const space = document.querySelector('.wg-space');
+    if (space) space.dataset.compact = 'true';
+  });
+  await page.waitForTimeout(600);
+  const compact = await page.evaluate(() => {
+    const orb = document.querySelector('.wg-orb')?.getBoundingClientRect();
+    const space = document.querySelector('.wg-space')?.getBoundingClientRect();
+    return {
+      orb: orb && { y: Math.round(orb.y), w: Math.round(orb.width), b: Math.round(orb.bottom) },
+      spaceBottom: space && Math.round(space.bottom),
+      fits: Boolean(orb && space && orb.bottom <= space.bottom && orb.y >= 0),
+    };
+  });
+  console.log(`${viewport.name.toUpperCase()}-COMPACT`, compact);
+  await page.screenshot({ path: `shots-v6/${viewport.name}-${viewport.width}x${viewport.height}-compact.png` });
   await context.close();
 }
 
