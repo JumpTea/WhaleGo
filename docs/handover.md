@@ -248,7 +248,7 @@ python tools/brand/make-brand.py
 - 云朵球为离线烘焙的 1024×1024 WebP（`ORB_SKY`，约 11.5KB，base64 后约 15KB），
   `clamp(120px, min(54vw, 54vh, calc(100dvh - 2*var(--wg-composer) - 24px)), 300px)`；
   竖屏 430 宽 232，横屏收小到约 120，云层只有缩放/平移；无状态文字、无同心环。
-- 聆听（Web Speech zh-CN，1.4s 静音自动发）、思考、逐句说话、全屏点球缩成小球露聊天、点空白打断、☰ 收起留 64px 迷你球、
+- 聆听（Web Speech zh-CN，1.4s 静音自动发）、思考、逐句说话、全屏点球缩成小球露聊天、点空白打断、有对话时 ☰ 收起留 64px 迷你球、空会话收起直接结束并恢复首页、
   原生 ✕ 结束，全部实测通过。
 - compact：`.wg-stage` 从居中 `translateY(calc(50dvh - composer - 74px))` 下移、球同时 `scale(.5)`，
   460ms 同一曲线；视觉 27vw，原生聊天可点可滚；底部 210px 白色渐隐；点小球回全屏并在说话时 cancel+重听。
@@ -258,8 +258,8 @@ python tools/brand/make-brand.py
 - typed：原生输入框打字 → 自动 compact、朗读 agent 回答、聊天里保留完整文字。
 - 流断保护：`/whalego/live` 断开时停本地队列、提示「语音流断了，请再点一次球重试。」、phase 回 idle、取消后端回合；
   队列排空但 12s 没有新帧也会触发同一兜底；点球重试重新聆听，`probe12`/`probe13` 覆盖。
-- 验证：`node --test` 35/35；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
-  入场时长、打断/收起/重开、说话中结束、Web Speech 实时转写与自动发送、typed、长输入框、麦克风被拒、流断开重试；`tools/check-playback.mjs` 11 项回执链路。
+- 验证：`node --test` 35/35；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14/15.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
+  入场时长、打断/收起/重开、空首页收起、说话中结束、Web Speech 实时转写与自动发送、typed、长输入框、麦克风被拒、流断开重试；`tools/check-playback.mjs` 11 项回执链路。
 - 推送注意：本机 `credential.helper` 全局先命中 Git Credential Manager，无缓存时会卡住；
   用 `git -c credential.helper= -c credential.helper=store push origin main` 走 `~/.git-credentials`。
 
