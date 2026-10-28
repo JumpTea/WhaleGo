@@ -34,7 +34,7 @@ await page.addInitScript(() => {
       this.onend = null;
     }
     start() {
-      setTimeout(() => this.emit('请分三点详细说明你能在这个工作区里做什么，每点两句话。', true), 300);
+      setTimeout(() => this.emit('请写一篇至少八百字的散文，主题是凌晨的城市，分四段。', true), 300);
     }
     emit(text, final) {
       const result = [{ transcript: text }];
