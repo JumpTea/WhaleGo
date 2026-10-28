@@ -280,3 +280,35 @@ test('player resolves only once the audio really ends', async () => {
     URL.revokeObjectURL = real.revokeObjectURL;
   }
 });
+
+test('player primes one media element for iOS playback', () => {
+  const { window } = loadClient();
+  const made = [];
+  class FakeAudio {
+    constructor() {
+      this.handlers = {};
+      this.src = '';
+      this.played = 0;
+      made.push(this);
+    }
+    addEventListener() {}
+    removeEventListener() {}
+    play() {
+      this.played += 1;
+      return Promise.resolve();
+    }
+    pause() {}
+  }
+  const real = globalThis.Audio;
+  globalThis.Audio = FakeAudio;
+  try {
+    const player = window.__whalegoInternals.createPlayer();
+    player.unlock();
+    player.unlock();
+    assert.equal(made.length, 1, 'one element for the whole session');
+    assert.equal(made[0].played, 1, 'prime only once');
+    assert.match(made[0].src, /^data:audio\/wav;base64,/, 'silent wav unlocks HTMLAudio');
+  } finally {
+    globalThis.Audio = real;
+  }
+});

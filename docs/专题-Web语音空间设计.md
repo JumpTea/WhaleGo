@@ -100,7 +100,7 @@
 
 ## 6. 验收
 
-- `node --test`：**33/33**（含 player 预取、speaker 预热、真实会话语音回合、回执落定）。
+- `node --test`：**34/34**（含 player 预取、speaker 预热、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
 - 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；

@@ -177,7 +177,7 @@ audio.ended → finishJob → transcript done → idle
 
 ```bash
 cd WhaleGo
-node --test                 # 33 项单测
+node --test                 # 34 项单测
 node --check lib/index.js   # 语法
 ```
 
@@ -255,7 +255,7 @@ python tools/brand/make-brand.py
   浏览器排空队列且 `generationDone` 才回报 `playback ended`。没有 `prompt` 的宿主自动回退独立语音脑。
 - 客户端预取：当前句播放时 `prepare(next)`，实测句间 `ended→playing` 8–22ms。
 - typed：原生输入框打字 → 自动 compact、朗读 agent 回答、聊天里保留完整文字。
-- 验证：`node --test` 33/33；`tools/live/probe2/3/5/6.mjs` 覆盖 430/360/320 宽、入场时长、
+- 验证：`node --test` 34/34；`tools/live/probe2/3/5/6.mjs` 覆盖 430/360/320 宽、入场时长、
   打断/收起/重开、typed；`tools/check-playback.mjs` 11 项回执链路。
 
 ### 待办
