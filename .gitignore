@@ -17,6 +17,7 @@ assets/promo/whalego-promo-audio.wav
 *.tmp
 *.bak
 artifacts/
+docs/对话纪要.md
 
 film/node_modules/
 film/out/
