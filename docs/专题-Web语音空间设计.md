@@ -27,7 +27,12 @@
 3. **聆听**：请求麦克风；用 Web Speech API 做实时转写，转写逐字上屏；球随输入音量轻微起伏。
    - 浏览器不支持 / 未授权时，退化为「打字说一句」，输入框就在同一位置，不弹新窗口。
 4. **思考**：转写定格，球收束、亮度降低，出现极细的环形进度。
-5. **说话**：文字逐字出现（来自 `/whalego/live` 的流），音频用 MediaSource 边下边播（`/whalego/speak`）。
+5. **说话**：文字逐字出现（来自 `/whalego/live` 的流），音频按**句**流式播放：
+   SSE 每帧带 `speech[]`（已切好的完整句子，`generationDone` 表示后文不再增长），
+   客户端按句子顺序入队、一句播完再播下一句（`/whalego/speak` 用 MediaSource 边下边播），
+   所以第一句在生成还没结束时就已经在响。
+   - 播放结束由浏览器回报：队列排空且 `generationDone` 为真时 `POST /whalego/playback {state:'ended'}`，
+     引擎收到回执才把回合置为 `done`（Web 侧的 `audio.done`）。
 6. **打断**：任意位置单击 → `POST /whalego/cancel`；已出现的文字保留，球回到待命。
 7. **退出**：左上角「收起」返回聊天；会话内容仍然在聊天里。
 8. **无障碍**：所有控件有 aria-label；`prefers-reduced-motion` 时关闭大幅动效。
@@ -50,8 +55,9 @@
 | --- | --- | --- |
 | GET | `/whalego/session` | 取最近活会话；没有则建空会话 |
 | POST | `/whalego/voice-turn` | `{sessionId,text}` 启动语音回合，返回 `{effect:{key}}` |
-| GET | `/whalego/live?turn=&sessionId=` | SSE：`state` / `voice`（全量文本）/ `text` / `done` |
+| GET | `/whalego/live?turn=&sessionId=` | SSE：`state` / `voice`（全量文本）/ `text` / `speech[]`（可播的分句）/ `generationDone` |
 | POST | `/whalego/speak` | `{text}` → `audio/mpeg` 分块流（MediaSource 播放） |
+| POST | `/whalego/playback` | `{sessionId,turnId,state}`：`ended` 播放完毕（回合落定）/ `stopped` / `error` |
 | POST | `/whalego/cancel` | `{sessionId}` 打断 |
 
 ## 5. 验收

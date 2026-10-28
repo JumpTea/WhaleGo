@@ -39,7 +39,7 @@ test('speech cache round-trips and prunes files', () => {
   assert.ok(cache.get('c').length > 0);
 });
 
-test('apply mounts panels, handlers, strip and the health route', () => {
+test('apply mounts panels, handlers, strip and the health route', async () => {
   const panels = new Map();
   const strips = new Map();
   const handlers = new Map();
@@ -47,6 +47,7 @@ test('apply mounts panels, handlers, strip and the health route', () => {
   let capability;
   const routes = [];
   let routeHandler;
+  let playbackHandler;
   const dshGo = {
     panel(id, definition) {
       panels.set(id, definition);
@@ -83,6 +84,7 @@ test('apply mounts panels, handlers, strip and the health route', () => {
       register(definition) {
         routes.push(definition);
         if (definition.path === '/whalego/health') routeHandler = definition.handler;
+        if (definition.path === '/whalego/playback') playbackHandler = definition.handler;
         return () => {};
       },
     },
@@ -113,4 +115,35 @@ test('apply mounts panels, handlers, strip and the health route', () => {
   let body = '';
   routeHandler({}, { setHeader() {}, end(value) { body = value; } });
   assert.equal(JSON.parse(body).ok, true);
+
+  // The playback receipt is the web twin of the App's `audio.done`: it settles
+  // a web turn, and stays honest about turns that are no longer running.
+  assert.ok(routes.some((registered) => registered.path === '/whalego/playback'));
+  assert.equal(typeof playbackHandler, 'function');
+  const call = (req) =>
+    new Promise((resolve) => {
+      const res = {
+        statusCode: 0,
+        setHeader() {},
+        end(value) {
+          resolve({ status: res.statusCode, body: value ? JSON.parse(value) : null });
+        },
+      };
+      playbackHandler(req, res);
+    });
+  const post = (payload) => ({
+    method: 'POST',
+    async *[Symbol.asyncIterator]() {
+      yield Buffer.from(JSON.stringify(payload));
+    },
+  });
+
+  const wrongMethod = await call({ method: 'GET' });
+  assert.equal(wrongMethod.status, 405);
+  const missing = await call(post({ sessionId: 's1' }));
+  assert.equal(missing.status, 400);
+  assert.match(missing.body.error, /turnId/);
+  const unknown = await call(post({ sessionId: 's1', turnId: 'gone', state: 'ended' }));
+  assert.equal(unknown.status, 200);
+  assert.equal(unknown.body.completed, false);
 });

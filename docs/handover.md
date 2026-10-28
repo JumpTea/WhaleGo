@@ -19,7 +19,7 @@ WhaleGo 是 DSH-Go 的双脑语音插件：语音脑先说，文字脑只在复�
 
 - 插件清单：`package.json` 的 `dshGo` 字段，含 4 个面板、6 个入口、`audio` 能力、`media` 声明。
 - 宿主装配：`lib/index.js` 通过 `ctx.inject(['dshGo'])` 挂载；监听 assistant 流与会话事件；注册 health 路由。
-- 双脑编排：语音脑流式出字、文字脑独立回合、TTS、缓存、打断、状态机；当前 TTS 是整段合成，不是按句流式。
+- 双脑编排：语音脑流式出字、文字脑独立回合、TTS、缓存、打断、状态机。Web 半侧已按句流式：`/whalego/live` 下发 `speech[]` 分句，浏览器逐句播放，播完用 `POST /whalego/playback` 回报才落定回合；原生 `media` 路径仍是整段合成。
 - 设置：11 组偏好，全部写入 `$DSH_HOME/whalego/prefs.json`；4 个声明式面板。
 - 原生接缝：`lib/nativeSeam.js` 对 5 个方法做特性探测与空实现。
 - 单测：`node --test`，8 项通过。
@@ -230,7 +230,7 @@ python tools/brand/make-brand.py
 ## 10. 下一步
 
 1. 原生侧 P0：`voiceLine`（持久化消息）/ `audioStream` / `voiceTurn`（双脑与两条消息）/ `voiceInput`（实时转写）。
-2. 插件侧：补 `openVoiceTurn` / `openVoiceInput` 探测；`voiceBrain` 切到 `voiceTurn`；`#selectMode` 的简单分支改 `voice-only`；TTS 改按句流式；`appendVoiceLine` 传全量并带 `context`。
+2. 插件侧：补 `openVoiceTurn` / `openVoiceInput` 探测；`voiceBrain` 切到 `voiceTurn`；`#selectMode` 的简单分支改 `voice-only`；`appendVoiceLine` 传全量并带 `context`；TTS 按句流式（Web 侧已接通：SSE 分句 + 播放结束回执；原生 `media` 路径仍是整段）。
 3. 插件侧：设置迁到 DSH 插件设置 schema；`orb` 作为 P2 控制入口。
 4. 原生侧 P1：免手、VAD、barge-in。
 5. 真机跑第 7 节验收，记录到 `docs/testing.md`。
