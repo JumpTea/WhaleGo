@@ -99,17 +99,6 @@
           "icon": "chat"
         }
       ],
-      "composer.strip": [
-        {
-          "id": "whalego.status",
-          "icon": "mic",
-          "text": {
-            "zh": "鲸语 · 待命",
-            "en": "WhaleGo · idle"
-          },
-          "panel": "whalego.live"
-        }
-      ],
       "panels": [
         {
           "id": "whalego.live",

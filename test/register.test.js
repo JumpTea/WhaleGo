@@ -96,10 +96,10 @@ test('apply mounts panels, handlers, strip and the health route', async () => {
   apply(ctx);
 
   assert.deepEqual([...panels.keys()].sort(), ['whalego.about', 'whalego.diag', 'whalego.live', 'whalego.settings']);
-  assert.deepEqual([...handlers.keys()].sort(), ['whalego.ask', 'whalego.explain', 'whalego.read', 'whalego.status', 'whalego.stop']);
+  assert.deepEqual([...handlers.keys()].sort(), ['whalego.ask', 'whalego.explain', 'whalego.read', 'whalego.stop']);
   assert.ok(media.has('speech'));
   assert.equal(typeof capability, 'function');
-  assert.ok(strips.has('whalego.status'));
+  assert.equal(strips.size, 0);
   assert.ok(routes.some((registered) => registered.path === '/whalego/health'));
   assert.ok(routes.some((registered) => registered.path === '/whalego/voices'));
   assert.ok(routes.some((registered) => registered.path === '/whalego/voice-turn'));
@@ -109,10 +109,6 @@ test('apply mounts panels, handlers, strip and the health route', async () => {
   const result = settings.mode({}, { value: 'dual' });
   assert.equal(result.toast, '已保存。');
   assert.equal(JSON.parse(readFileSync(join(process.env.DSH_HOME, 'whalego', 'prefs.json'), 'utf8')).mode, 'dual');
-
-  let emitted;
-  strips.get('whalego.status')({ sessionId: 's1' }, (value) => { emitted = value; }, { locale: 'zh' });
-  assert.match(emitted.text, /^鲸语 · /);
 
   let body = '';
   routeHandler({}, { setHeader() {}, end(value) { body = value; } });
