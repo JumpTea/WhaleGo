@@ -5,13 +5,15 @@
 import { chromium } from 'playwright-core';
 
 const url = process.argv[2];
+const width = Number(process.argv[3] || 430);
+const height = Number(process.argv[4] || 932);
 const browser = await chromium.launch({
   executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
   headless: true,
   args: ['--no-first-run', '--disable-extensions', '--autoplay-policy=no-user-gesture-required'],
 });
 const context = await browser.newContext({
-  viewport: { width: 430, height: 932 },
+  viewport: { width, height },
   deviceScaleFactor: 2,
   isMobile: true,
   hasTouch: true,
