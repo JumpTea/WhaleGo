@@ -90,19 +90,18 @@ dsh <profile> --port 3100 --host 127.0.0.1 --no-open
 - 自动选择最近一个**活着的**会话；没有就新开一个空会话，不会把话发给已断开的旧会话。
 - 完整的视觉/交互规格与验收记录见 [`docs/专题-Web语音空间设计.md`](docs/专题-Web语音空间设计.md)。
 
-### 冒烟测试（真 key）
+### 冒烟测试
+
+公开仓库不包含 agent/浏览器探针（`tools/live/probe*.mjs`、`tools/smoke-agent.mjs`）；它们只保留在开发者的本地工作副本，并由 `.gitignore` 排除。
+
+公开安装后用以下命令验证产品本身：
 
 ```bash
-# Web 语音回合 + 真实 agent 工具：写文件、读回、说话中插话取消
-node tools/live/probe20.mjs http://127.0.0.1:3100 <token>
-
-# 纯 web 半侧：真实答案、文字流、多轮、流中取消、音频流
-node tools/smoke-web.mjs http://127.0.0.1:3100 <token>
+node --test
+node tools/check-playback.mjs
 ```
 
-`probe20` 会用当前 `standard` 预设启动真实 agent 回合，把 `.whalego-live-smoke.txt` 写进工作区，再读回；
-磁盘断言和语音回合的 turnId/phase 都会检查。旧的 `tools/smoke-agent.mjs` 仍按老版 `dsh <profile> <prompt>`
-调用，新 CLI 已不接受位置参数，不再作为当前验收入口。
+真实 key 的语音回合、文件读写和插话冒烟属于本地开发流程，不在公开仓库分发。
 
 要求：
 
