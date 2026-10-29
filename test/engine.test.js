@@ -39,6 +39,7 @@ function makeHarness({ dshGo, attachments } = {}) {
         engine.onAssistantFrame('s1', { type: 'start', turn: 1 });
         engine.onAssistantFrame('s1', { type: 'chunk', chunk: { type: 'text-delta', text: '文字答案。' } });
         engine.onAssistantFrame('s1', { type: 'end' });
+        engine.onSessionEvent('s1', { type: 'turn/end', reason: 'completed' });
       }, 5);
       return { requestId: request.requestId };
     },
