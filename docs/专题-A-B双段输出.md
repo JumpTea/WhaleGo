@@ -108,24 +108,20 @@
 4. **`#cancelJob`**：把 `heard` 定稿（见 §3.4），`voice` 保持全文。
 5. **降级**：宿主没有 `llm` 服务时，退回当前 `#runWebVoice`（读文本脑），并在界面标注"单段模式"。
 
-### 3.3 B 的来源（关键决策，二选一）
+### 3.3 B 的来源（已定）
 
-**方案 B1（推荐，先做）——直调 LLM，A 作上下文**
+**B 走 Session agent（B2）。** 原因有三：
 
-- 用 `ctx.llm.prepareCall`，`provider/model` 取自 `sessionController.modelCatalog()`
-- 消息里带「问题 + A 全文 + 要求：写完整书面答案，不要复述口语」
-- 优点：与 A 同源，绝不会自相矛盾；不污染会话
-- 缺点：不进聊天记录、不能用工具、和"文本模式"的答案不完全等价
+1. 用户的问题和回答必须落进会话——`arch/交付` 明确「用户原问题照常进 DSH 会话」，
+   走直调 LLM 会让聊天里只剩语音行，等于把对话从聊天记录里抹掉
+2. B 要「像文本模式生成的一样」：能用工具、能看环境、能进历史
+3. 打断后的 `seen` 需要会话里的那条消息才能对齐
 
-**方案 B2——走 Session agent**
+代价：B 看不到 A 的措辞，两段可能风格不同；事实层面靠同一模型 + 同一问题约束，
+不再额外做「A 作上下文」。
 
-- 复用今天的 `#text.prompt(question)`，答案进聊天、能用工具
-- 但 **Session prompt 无法携带隐藏上下文**（已核对 `dsh-api-session-controller`，
-  `prompt()` 只有 `content`，没有 hidden/ephemeral 字段），要让它看见 A 只能再发一条
-  用户消息，会污染聊天记录
-- 因此 B2 实际上是"A 与 B 各自答一遍"，一致性无解，除非宿主补 `voiceTurn`
-
-**决策规则**：先 B1，等宿主 `native.voiceTurn` 落地后再切 B2。
+**降级**：宿主没有 `sessionController.prompt` 时，才退回直调 LLM 的 B1
+（`#runWritten`，带 A 全文），保证界面仍有两段。
 
 ### 3.4 打断：两个进度，不是一
 
