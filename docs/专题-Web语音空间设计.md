@@ -125,12 +125,17 @@
   compact 只改布局，不再调用 `stopListening`——否则缩球会静默把全双工变回半双工。
 - **字幕只跟耳朵**：`createSpeaker` 在真正 `play(line)` 时回调 `onLine`，所以字幕粒度是「当前句」；
   compact 把每句追加进 `wg-lines`，累积边界同样只由音频推进，不是 token 流；原生聊天仍由 DSH 自己流式渲染，插件不修改它的 DOM，只用 `.wg-veil` 在 compact 说话期间遮住它。
+- **回合边界只认 `turn/end`**：DSH 的 assistant `end` 可能只关掉一个带工具调用的步骤，此时还
+  没有文字；`TextBrain` 若在这里 finish，语音引擎会认为回答为空并取消整轮，工具就永远等不到结果
+  （表现为 `tool call aborted before dispatch`）。现在只由 `onSessionEvent` 的 `turn/end` 结束回合。
+- **插话发送不依赖识别器 timer**：关麦/收起会清普通静音计时器；插话文本另存 `pendingRef`，
+  由 150ms watchdog 在 deadline 后发送，用户的话不会跟着 timer 一起被清掉。
 
 ## 6. 验收
 
 - `node --test`：**36/36**（含 player 预取、speaker 预热/停滞判定、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
-- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs` / `probe13.mjs` / `probe14.mjs` / `probe15.mjs` / `probe16.mjs` / `probe17.mjs` / `probe18.mjs` / `probe19.mjs`）：
+- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs` / `probe13.mjs` / `probe14.mjs` / `probe15.mjs` / `probe16.mjs` / `probe17.mjs` / `probe18.mjs` / `probe19.mjs` / `probe20.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；说话中 compact 的 `data-veil=true`，说完 `data-veil=false`，截图 `03-compact.png` / `04-compact-done.png` 分别是「只有字幕」和「完整聊天」；
   - 360×800 / 320×700：无横向溢出，slot 可点，composer 不被盖住；
   - 交互状态机：说话 → compact（继续播、麦克风不关，原生聊天被同色底遮住，只显示逐句累积的已读句）→ 点球打断并聆听 → ☰ 收起 → 迷你球重开聆听 → 待命时点球 compact；
@@ -150,6 +155,7 @@
   - `probe17`：深/浅主题各开一次，`--wg-bg` 分别为 `#f7f7f5` / `#151517`；页面 `transform:none`、宽度 430、右缘 `atRight=wg-space`，右侧不再漏出原生页；640 宽同样 `width:640`、`atRight=wg-space`。
   - `probe18`：全双工状态机——说话中识别器常开；把答案前 18 字当 TTS 回声送回，phase/turn 不变；用户插话后 250ms 内停音频、`POST /whalego/cancel`，900ms 后发第二问；两次提问各出现一次、无重复气泡；手动 `stop()` 后识别器自动重启（starts 2）。
   - `probe19`：`no-speech` 后识别器重启（starts 2、phase 仍 listening、无错误）；`not-allowed` 只启动一次、phase idle、球下显示权限提示。
+  - `probe20`（真实 key）：语音回合让 `standard` agent 写 `.whalego-live-smoke.txt` 再读回；磁盘断言通过，证明工具循环不再被提前结束；同一会话第三问说话中插话，取消上一轮并在约 900ms 后生成新 turnId。
   - `probe5` 增补：收起态的迷你球随键盘收缩，600px 高时 mini y380–444、card 466、间距 22px。
 - 真机仍需用户确认：iOS Safari 的 Web Speech 授权与连续识别、真实网络下 Edge TTS 首句延迟。
 
