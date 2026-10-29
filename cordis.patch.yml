@@ -2,3 +2,9 @@
 - insert:
     - id: whalego
       name: whalego
+      config:
+        mode: auto
+        voice: zh-CN-XiaoxiaoNeural
+        rate: normal
+        thinkOrb: corner
+        filler: 我想想。
