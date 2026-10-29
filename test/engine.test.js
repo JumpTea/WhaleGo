@@ -47,7 +47,13 @@ function makeHarness({ dshGo, attachments } = {}) {
     },
   };
   const llm = {
-    async *stream() {
+    async *stream(options = {}) {
+      // B (the written brain) carries its own system prompt; A does not.
+      if (String(options.system ?? '').includes('文字脑')) {
+        await sleep(2);
+        yield { type: 'text-delta', text: '书面答案。' };
+        return;
+      }
       yield { type: 'text-delta', text: '我想想。' };
       await sleep(2);
       yield { type: 'text-delta', text: '语音答案。' };
@@ -92,7 +98,7 @@ test('dual brain: voice line and text answer land in the transcript', async () =
   await sleep(60);
   const record = transcript.list('s1')[0];
   assert.match(record.voice, /语音答案/);
-  assert.match(record.text, /文字答案/);
+  assert.match(record.text, /书面答案/);
   assert.ok(spoken.some((line) => line.includes('语音答案')));
   const voiceMessage = listVoices({ limit: 5 }).find((entry) => /语音答案/.test(entry.text));
   assert.ok(voiceMessage, 'voice line was remembered for the web half');
