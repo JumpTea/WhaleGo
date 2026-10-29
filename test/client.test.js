@@ -74,6 +74,7 @@ test('apply mounts the floating voice panel into the page', () => {
 test('speaker queues segments in order and settles only after the last line', async () => {
   const { window } = loadClient();
   const lines = [];
+  const spoken = [];
   const gates = [];
   const phases = [];
   const reports = [];
@@ -82,6 +83,7 @@ test('speaker queues segments in order and settles only after the last line', as
       lines.push(line);
       return new Promise((resolve) => gates.push(resolve));
     },
+    onLine: (line) => spoken.push(line),
     report: (state) => reports.push(state),
     phase: (state) => phases.push(state),
   });
@@ -102,6 +104,7 @@ test('speaker queues segments in order and settles only after the last line', as
   gates.shift()('ended');
   await tick();
   assert.deepEqual(lines, ['第一句。', '第二句。']);
+  assert.deepEqual(spoken, ['第一句。', '第二句。']);
   assert.deepEqual(reports, []);
 
   // Generation ends while the last line is still sounding: no receipt yet.

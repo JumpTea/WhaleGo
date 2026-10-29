@@ -7,6 +7,7 @@ import { chromium } from 'playwright-core';
 const url = process.argv[2];
 const width = Number(process.argv[3] || 430);
 const height = Number(process.argv[4] || 932);
+const question = process.argv[5] || '用一句话介绍你自己';
 const browser = await chromium.launch({
   executablePath: 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
   headless: true,
@@ -78,6 +79,8 @@ const state = () =>
       slot: slot?.textContent,
       sr: document.querySelector('.wg-sr')?.textContent,
       heard: document.querySelector('.wg-heard')?.textContent,
+      lines: [...document.querySelectorAll('.wg-lines p')].map((p) => p.textContent),
+      linesRect: r(document.querySelector('.wg-lines')),
       inputVisible: Boolean(input && input.getBoundingClientRect().bottom <= innerHeight && input.getBoundingClientRect().top >= 0),
       inputBottom: input ? Math.round(input.getBoundingClientRect().bottom) : null,
       chatText: document.body.innerText.replace(/\s+/g, ' ').slice(0, 600),
@@ -99,7 +102,7 @@ console.log('FULL', JSON.stringify(await state(), null, 2));
 await page.screenshot({ path: 'shots-v5/01-full.png' });
 
 // First voice turn: writes into the real session and streams a spoken answer.
-await page.evaluate(() => window.__whalegoSay('用一句话介绍你自己'));
+await page.evaluate((q) => window.__whalegoSay(q), question);
 let sawSpeaking = false;
 for (let i = 0; i < 25; i += 1) {
   await page.waitForTimeout(1000);
@@ -118,6 +121,9 @@ await press('.wg-orb');
 await page.waitForTimeout(700);
 console.log('COMPACT', JSON.stringify(await state(), null, 2));
 await page.screenshot({ path: 'shots-v5/03-compact.png' });
+await page.waitForTimeout(2500);
+console.log('LINES', JSON.stringify((await state()).lines, null, 2));
+await page.screenshot({ path: 'shots-v5/03b-lines.png' });
 
 // Let it finish; the compact orb + native chat should stay put.
 for (let i = 0; i < 40; i += 1) {
