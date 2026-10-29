@@ -65,6 +65,7 @@ const state = () =>
     return {
       open: space?.getAttribute('data-open'),
       compact: space?.getAttribute('data-compact'),
+      veil: space?.getAttribute('data-veil'),
       phase: space?.getAttribute('data-phase'),
       spaceBg: space ? getComputedStyle(space).backgroundColor : null,
       pointer: space ? getComputedStyle(space).pointerEvents : null,

@@ -254,13 +254,13 @@ python tools/brand/make-brand.py
   答案前 18 字被当回声送回时 phase/turn 不变；用户插话时 250ms 内停音频、`POST /whalego/cancel`，
   900ms 后发新问题；compact 只改布局，不再 `stopListening`，缩球后麦克风仍开。
 - 说话时只显示**当前正在读的那一句**字幕（`createSpeaker` 的 `onLine`），不再把整段答案铺在语音页；
-  原生聊天仍按 DSH token 速度渲染，可能领先语音（宿主行为，见待办）。
+  compact 说话期间再用 `.wg-veil` 同色底遮住原生聊天，只留字幕，说完/打断后淡出露出完整聊天。
 - compact：`.wg-stage` 从居中 `translateY(calc(50dvh - composer - 74px))` 下移、球同时 `scale(.5)`，
   460ms 同一曲线；视觉 27vw，原生聊天可点可滚；底部 210px 白色渐隐；点小球回全屏并在说话时 cancel+重听。
 - 语音回合走真实会话：`TextBrain.prompt` → 140ms 轮询 `snapshot` → 分句 `#captureSpeech` → SSE；
   浏览器排空队列且 `generationDone` 才回报 `playback ended`。没有 `prompt` 的宿主自动回退独立语音脑。
 - 客户端预取：当前句播放时 `prepare(next)`，实测句间 `ended→playing` 8–22ms。
-- typed：原生输入框打字 → 自动 compact、朗读 agent 回答、聊天里保留完整文字。
+- typed：原生输入框打字 → 自动 compact、朗读 agent 回答；说话期间遮住原生聊天只留字幕，说完保留完整文字。
 - 流断保护：`/whalego/live` 断开时停本地队列、提示「语音流断了，请再点一次球重试。」、phase 回 idle、取消后端回合；
   队列排空但 12s 没有新帧也会触发同一兜底；点球重试重新聆听，`probe12`/`probe13` 覆盖。
 - 验证：`node --test` 36/36；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14/15/16/17/18/19.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
@@ -272,7 +272,7 @@ python tools/brand/make-brand.py
 
 - 真机（iOS Safari / Android Chrome）确认 Web Speech 授权、连续识别、`onend` 自动重启是否被系统拦、
   以及 Edge TTS 首句延迟；iOS 若要求每次手势，全双工只能降级为点球继续听。
-- 原生聊天比语音快：插件无法让 DSH 的 token 流等音频；语音页已改为当前句字幕，compact 里原生聊天仍可能提前露出。
+- 原生聊天比语音快：插件无法让 DSH 的 token 流等音频；语音页已改为当前句字幕，compact 说话期间用同色底遮住原生聊天，说完再露完整答案。
 - 打字回合目前整轮完成后一次朗读，未逐句流式；如需流式，要把 typed 回合也接 `#captureSpeech`。
 - 极长回答的最后几行仍可能落在小球后（DSH 虚拟列表不可安全改）；靠滚动阅读。
 - 发布版本号从 0.2.0 起（本次 WebUI 定稿），tag 与 release notes 待用户确认。

@@ -128,6 +128,7 @@ console.log('COMPACT', await page.evaluate(() => {
   const orb = document.querySelector('.wg-orb:not(.mini)')?.getBoundingClientRect();
   return {
     compact: space?.dataset.compact,
+    veil: space?.dataset.veil,
     orb: orb && { x: Math.round(orb.x), y: Math.round(orb.y), w: Math.round(orb.width) },
     caption: document.querySelector('.wg-caption')?.textContent ?? '',
   };
