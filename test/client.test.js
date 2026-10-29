@@ -335,3 +335,33 @@ test('player primes one media element for iOS playback', () => {
     globalThis.Audio = real;
   }
 });
+
+test('speaker reveals a line when it starts and counts it heard when it ends', async () => {
+  const { window } = loadClient();
+  const shown = [];
+  const heard = [];
+  const gates = [];
+  const speaker = window.__whalegoInternals.createSpeaker({
+    play: () => new Promise((resolve) => gates.push(resolve)),
+    report: () => {},
+    phase: () => {},
+    onLine: (line) => shown.push(line),
+    onHeard: (line) => heard.push(line),
+  });
+
+  speaker.accept({
+    speech: [
+      { id: 't:0', text: '第一句。' },
+      { id: 't:1', text: '第二句。' },
+    ],
+  });
+  await tick();
+  assert.deepEqual(shown, ['第一句。']);
+  assert.deepEqual(heard, []);
+
+  gates.shift()('ended');
+  await tick();
+  assert.deepEqual(shown, ['第一句。', '第二句。']);
+  // The second line has started but not finished: only the first counts as heard.
+  assert.deepEqual(heard, ['第一句。']);
+});

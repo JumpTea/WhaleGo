@@ -11,7 +11,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-function harness(t, { stream, synthesize, prompt } = {}) {
+function harness(t, { stream, synthesize, prompt, llm = true } = {}) {
   const transcript = new TranscriptStore();
   const cancellations = [];
   const prompts = [];
@@ -27,7 +27,7 @@ function harness(t, { stream, synthesize, prompt } = {}) {
   }
   const ctx = {
     get(name) {
-      if (name === 'llm') return { stream: stream ?? (async function* () { yield { type: 'text-delta', text: '这是语音回答。' }; }) };
+      if (name === 'llm') return llm ? { stream: stream ?? (async function* () { yield { type: 'text-delta', text: '这是语音回答。' }; }) } : undefined;
       if (name === 'sessionController') return session;
     },
   };
@@ -69,7 +69,7 @@ test('web voice exposes a complete clause while generation is still pending', as
 });
 
 test('web voice asks the real session agent and speaks its stream', async (t) => {
-  const { engine, prompts } = harness(t, { prompt: async () => {} });
+  const { engine, prompts } = harness(t, { prompt: async () => {}, llm: false });
   const effect = engine.ask({ sessionId: 's1', draft: '你好' });
   await until(() => prompts.length === 1);
   assert.deepEqual(prompts[0].content, [{ type: 'text', text: '你好' }]);
@@ -192,4 +192,54 @@ test('an ended receipt is refused while the answer is still being written', asyn
   await until(() => engine.live(effect.key).generationDone);
   assert.equal(engine.completePlayback({ sessionId: 's1', turnId: effect.key, state: 'ended' }), true);
   assert.equal(engine.live(effect.key).state, 'done');
+});
+
+test('web two-track: A speaks while B streams below it', async (t) => {
+  const { engine } = harness(t, {
+    stream: async function* (options = {}) {
+      if (String(options.system ?? '').includes('文字脑')) {
+        yield { type: 'text-delta', text: '书面答案。' };
+        return;
+      }
+      yield { type: 'text-delta', text: '语音答案。' };
+    },
+  });
+  const effect = engine.ask({ sessionId: 's1', draft: '帮我分析一下这个方案' });
+  await until(() => (engine.live(effect.key)?.voice ?? '').includes('语音答案'));
+  await until(() => (engine.live(effect.key)?.text ?? '').includes('书面答案'));
+  const live = engine.live(effect.key);
+  assert.equal(live.heap, 'b');
+  assert.equal(live.mode, 'dual');
+});
+
+test('web voice-only: a simple question never writes B', async (t) => {
+  const { engine } = harness(t, {
+    stream: async function* (options = {}) {
+      if (String(options.system ?? '').includes('文字脑')) {
+        yield { type: 'text-delta', text: '书面答案。' };
+        return;
+      }
+      yield { type: 'text-delta', text: '语音答案。' };
+    },
+  });
+  const effect = engine.ask({ sessionId: 's1', draft: '你好啊' });
+  await until(() => (engine.live(effect.key)?.voice ?? '').includes('语音答案'));
+  await new Promise((resolve) => setTimeout(resolve, 30));
+  assert.equal(engine.live(effect.key).text, '');
+  assert.equal(engine.live(effect.key).heap, 'a');
+});
+
+test('a barge-in freezes what was heard, not the whole line', async (t) => {
+  const { engine, transcript } = harness(t);
+  const effect = engine.ask({ sessionId: 's1', draft: '你好' });
+  await until(() => (engine.live(effect.key)?.voice ?? '').includes('语音回答'));
+  engine.interrupt('s1', '第一句。');
+  assert.equal(transcript.get(effect.key).heard, '第一句。');
+});
+
+test('seen records how much of the written answer reached the screen', (t) => {
+  const { engine, transcript } = harness(t);
+  const effect = engine.ask({ sessionId: 's1', draft: '你好' });
+  assert.equal(engine.setSeen(effect.key, '第一段'), true);
+  assert.equal(transcript.get(effect.key).seen, '第一段');
 });
