@@ -184,3 +184,24 @@
 - PCMag：ChatGPT 把语音移进聊天窗口 <https://www.pcmag.com/news/chatgpt-brings-voice-mode-into-conversations-no-separate-interface>
 - Geeknetic：旧版全屏「浮动光球」、逐行转写、可中途打断 <https://www.geeknetic.es/Noticia/36691/La-nueva-integracion-de-voz-de-ChatGPT-unifica-conversacion-texto-y-controles-en-un-mismo-flujo-y-convierte-el-chat-en-una-experiencia-casi-natural.html>
 - TechRadar：语音与文字融合的体验评价 <https://www.techradar.com/ai-platforms-assistants/chatgpt/chatgpts-new-voice-integration-feels-like-the-missing-piece-in-ai-chat-ive-tried-it-and-its-almost-perfect>
+
+## 球的落位与呼吸：有意的状态语言（**不是 bug**）
+
+球的两种位置是有意设计的，分别对应两种状态，**不要把它们当成布局漂移或定位错误去"修正"**：
+
+| 状态 | 球的落位 | 呼吸节奏 | 想表达的意思 |
+| --- | --- | --- | --- |
+| 思考中 | 右下角 64px 迷你球 | 慢、幅度小 | 在后台想，不挡聊天 |
+| 朗读中 | 回到底部中央（输入条上方） | 快、幅度大 | 正在对你说话 |
+
+这两者之间是**有意的状态切换**，不是 CSS 没定位住：
+
+- 思考时用户多半在看聊天内容，球缩到右下让出阅读区
+- 开口朗读时球回到视线中心偏下，声音与视觉同时指向同一处
+- 朗读结束回到右下，视线重新让给文字
+
+因此：
+
+1. 不要为了「球应该一直居中」或「球应该一直留在右下」去改这段逻辑
+2. 调整位置只能改 `#whalego-voice-host .wg-space[data-compact="true"] .wg-stage` 与 `.wg-mini` 的成对规则，改完要同步 `probe` 截图基线
+3. 评审时若有人报告「球在跳」，先对照这张表，再判断是不是回归
