@@ -244,7 +244,8 @@ python tools/brand/make-brand.py
 ### 已落地
 
 - 输入条活动区注入 32px 麦克风圆钮；点开**原位淡入**全屏语音页（180ms opacity，不再整页上滑；
-  覆盖基础样式遗留的 `left:50%/translateX(-50%)`，否则 100vw 会把页面左移半屏并露出右侧空白）。
+  覆盖基础样式遗留的 `left:50%/translateX(-50%)`，否则 100vw 会把页面左移半屏；真机另有一条 40px 白边，
+  状态栏/聊天/浮层工具条也止于 600/640，判断在 WebView 之外，插件只能同步 `html/body` 背景作兜底）。
   顶部仅 38px ☰，原生输入条始终在下方可用；页面底边由每 500ms 复测的 composer card top 决定。
 - 深浅色跟随 `html.dsh-dark`：浅色 `#f7f7f5`、深色 `#151517`，按钮/错误卡/输入条/compact 渐变一起换肤。
 - 云朵球为离线烘焙的 1024×1024 WebP（`ORB_SKY`，约 11.5KB，base64 后约 15KB），
