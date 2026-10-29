@@ -48,6 +48,7 @@ test('apply mounts panels, handlers, strip and the health route', async () => {
   const routes = [];
   let routeHandler;
   let playbackHandler;
+  let prefsHandler;
   const dshGo = {
     panel(id, definition) {
       panels.set(id, definition);
@@ -85,6 +86,7 @@ test('apply mounts panels, handlers, strip and the health route', async () => {
         routes.push(definition);
         if (definition.path === '/whalego/health') routeHandler = definition.handler;
         if (definition.path === '/whalego/playback') playbackHandler = definition.handler;
+        if (definition.path === '/whalego/prefs') prefsHandler = definition.handler;
         return () => {};
       },
     },
@@ -146,4 +148,36 @@ test('apply mounts panels, handlers, strip and the health route', async () => {
   const unknown = await call(post({ sessionId: 's1', turnId: 'gone', state: 'ended' }));
   assert.equal(unknown.status, 200);
   assert.equal(unknown.body.completed, false);
+
+  // Saving settings is what every tap in the settings sheet hits. It once used
+  // the enum tables without importing them, so every save answered 500 — from
+  // the outside that looks exactly like "nothing happened".
+  assert.equal(typeof prefsHandler, 'function');
+  const save = (payload, method = 'POST') =>
+    new Promise((resolve) => {
+      const res = {
+        statusCode: 0,
+        setHeader() {},
+        end(value) {
+          resolve({ status: res.statusCode, body: value ? JSON.parse(value) : null });
+        },
+      };
+      prefsHandler(
+        {
+          method,
+          async *[Symbol.asyncIterator]() {
+            yield Buffer.from(JSON.stringify(payload));
+          },
+        },
+        res,
+      );
+    });
+  const saved = await save({ mode: 'read', thinkOrb: 'center' });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.body.prefs.mode, 'read');
+  assert.equal(saved.body.prefs.thinkOrb, 'center');
+  assert.equal(JSON.parse(readFileSync(join(process.env.DSH_HOME, 'whalego', 'prefs.json'), 'utf8')).mode, 'read');
+  assert.equal((await save({ mode: 'sideways' })).status, 400);
+  assert.equal((await save({})).status, 400);
+  assert.equal((await save({ mode: 'dual' }, 'GET')).status, 405);
 });
