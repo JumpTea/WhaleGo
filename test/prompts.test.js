@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildWrittenMessages, complexityOf, splitSpeakable } from '../lib/prompts.js';
+import { buildVoiceSystem, buildWrittenMessages, complexityOf, splitSpeakable } from '../lib/prompts.js';
 
 test('speech boundaries release a sentence before the answer finishes', () => {
   const first = splitSpeakable('我想想。后面的答案还在生成', 0);
@@ -43,6 +43,12 @@ test('a long or question-shaped line is complex without a keyword', () => {
 test('a follow-up inherits the previous complexity', () => {
   assert.equal(complexityOf('那第二点呢', 'complex'), 'complex');
   assert.equal(complexityOf('那第二点呢', 'simple'), 'simple');
+});
+
+test('the spoken prompt hands tool work to the written agent', () => {
+  const system = buildVoiceSystem('我想想。');
+  assert.match(system, /文字助手/);
+  assert.match(system, /不要提「没有工具」/);
 });
 
 test('the written prompt is anchored to the spoken line', () => {

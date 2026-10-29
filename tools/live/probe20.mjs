@@ -137,7 +137,8 @@ console.log('T1', JSON.stringify(first, null, 2));
 const written = existsSync(file) ? file : existsSync(fileHere) ? fileHere : '';
 console.log('FILE', written, written ? readFileSync(written, 'utf8') : '');
 assert.equal(first.phase, 'done');
-assert.match(first.answer, /已写入/);
+// A is the spoken track and has no tools; B (the written agent) does the work.
+// The file is the strongest evidence that the tool turn actually ran.
 assert.ok(written);
 assert.equal(readFileSync(written, 'utf8'), 'whalego-live-ok');
 
