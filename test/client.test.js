@@ -354,3 +354,10 @@ test('the client build stamp matches the package version', () => {
   assert.ok(match, 'CLIENT_BUILD is missing');
   assert.equal(match[1], pkg.version);
 });
+
+test('the state tracer is declared after probe (no temporal dead zone)', () => {
+  const probeAt = source.indexOf('const probe = useCallback');
+  const effectAt = source.indexOf("probe('state'");
+  assert.ok(probeAt > 0, 'probe is missing');
+  assert.ok(effectAt > probeAt, 'the tracer must come after probe');
+});
