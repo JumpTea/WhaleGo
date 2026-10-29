@@ -261,7 +261,7 @@ python tools/brand/make-brand.py
 - 语音回合走真实会话：`TextBrain.prompt` → 140ms 轮询 `snapshot` → 分句 `#captureSpeech` → SSE；
   浏览器排空队列且 `generationDone` 才回报 `playback ended`。没有 `prompt` 的宿主自动回退独立语音脑。
 - 客户端预取：当前句播放时 `prepare(next)`，实测句间 `ended→playing` 8–22ms。
-- typed：原生输入框打字 → 自动 compact、朗读 agent 回答；说话期间遮住原生聊天只留字幕，说完保留完整文字。
+- typed：原生输入框打字 → 自动 compact、朗读 agent 回答；typed 是聊天，原生聊天保留可见、不套 veil，语音回合才逐句累积已读句。
 - 流断保护：`/whalego/live` 断开时停本地队列、提示「语音流断了，请再点一次球重试。」、phase 回 idle、取消后端回合；
   队列排空但 12s 没有新帧也会触发同一兜底；点球重试重新聆听，`probe12`/`probe13` 覆盖。
 - 验证：`node --test` 36/36；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14/15/16/17/18/19.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
