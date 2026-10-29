@@ -40,6 +40,7 @@
    只要语音页开着、没静音、没被权限拒绝就保持麦克风常开。静音 1.4 秒只触发一次发送，不关识别器。
    已发送过问题后，若识别文本与当前答案高度重合（答案尾部/整段子串），判为 TTS 回声直接丢弃；
    用户真的插话时，先摘掉这一轮静音定时器、`cancel()` 后端回合、`player.stop()`，再送新问题。
+    `no-speech` / `aborted` 是连续识别的正常收尾，不阻塞重启；只有权限被拒、没有设备或识别服务断网才停下。
    麦克风被拒、没有设备或识别服务断网时，球下给出可操作的中文提示，仍可直接打字。
 3. **思考**：球轻微收束，云层变慢；不出现转圈、进度条或文字。
 4. **说话**：
@@ -48,6 +49,9 @@
    - 浏览器逐句入队，当前句播放时预取下一句（`/whalego/speak`），句间几乎无空档；
    - 队列排空且 `generationDone` 后，浏览器 `POST /whalego/playback {state:'ended'}`，
      引擎收到回执才把回合落定为 `done`。
+   - 全屏页的字幕（`.wg-caption`）由**正在播放的句子**驱动，不再整段显示答案；
+     compact 的正文来自原生聊天，仍可能领先音频——插件只读观察 DSH 的流式正文，
+     不能改写或暂停它，这是当前已知限制。
 5. **点球**：
    - 全屏说话/思考/聆听中 → **只缩成 27vw 小球**，落到输入条上方，露出原生聊天；
      麦克风不关、音频不停，缩小后仍然是全双工；
@@ -123,7 +127,7 @@
 
 - `node --test`：**36/36**（含 player 预取、speaker 预热/停滞判定、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
-- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs` / `probe13.mjs` / `probe14.mjs` / `probe15.mjs` / `probe16.mjs` / `probe17.mjs` / `probe18.mjs`）：
+- 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs` / `probe13.mjs` / `probe14.mjs` / `probe15.mjs` / `probe16.mjs` / `probe17.mjs` / `probe18.mjs` / `probe19.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；
   - 360×800 / 320×700：无横向溢出，slot 可点，composer 不被盖住；
   - 交互状态机：说话 → compact（继续播、麦克风不关）→ 点球打断并聆听 → ☰ 收起 → 迷你球重开聆听 → 待命时点球 compact；
@@ -142,6 +146,7 @@
   - `probe16`：同一会话连续两问，turnId 不同、两条提问都在原生聊天、无 pageerror。
   - `probe17`：深/浅主题各开一次，`--wg-bg` 分别为 `#f7f7f5` / `#151517`；页面 `transform:none`、宽度 430、右缘 `atRight=wg-space`，右侧不再漏出原生页。
   - `probe18`：全双工状态机——说话中识别器常开；把答案前 18 字当 TTS 回声送回，phase/turn 不变；用户插话后 250ms 内停音频、`POST /whalego/cancel`，900ms 后发第二问；两次提问各出现一次、无重复气泡；手动 `stop()` 后识别器自动重启（starts 2）。
+  - `probe19`：`no-speech` 后识别器重启（starts 2、phase 仍 listening、无错误）；`not-allowed` 只启动一次、phase idle、球下显示权限提示。
   - `probe5` 增补：收起态的迷你球随键盘收缩，600px 高时 mini y380–444、card 466、间距 22px。
 - 真机仍需用户确认：iOS Safari 的 Web Speech 授权与连续识别、真实网络下 Edge TTS 首句延迟。
 
