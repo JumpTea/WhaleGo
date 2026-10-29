@@ -261,13 +261,14 @@ python tools/brand/make-brand.py
   460ms 同一曲线；视觉 27vw，原生聊天可点可滚；底部 210px 白色渐隐；点小球回全屏并在说话时 cancel+重听。
 - 语音回合走真实会话：`TextBrain.prompt` → 140ms 轮询 `snapshot` → 分句 `#captureSpeech` → SSE；
   浏览器排空队列且 `generationDone` 才回报 `playback ended`。没有 `prompt` 的宿主自动回退独立语音脑。
+  A 段是语音脑，不拿工具；复杂问题启动 B 段（Session agent，带仓库工具）。
   `TextBrain` 只把 `turn/end` 当整轮结束；assistant `end` 可能只是一个工具步骤，提前 finish 会让引擎取消工具
   （已修，`probe20` 验证真实写文件/读回）。
 - 客户端预取：当前句播放时 `prepare(next)`，实测句间 `ended→playing` 8–22ms。
 - typed：原生输入框打字 → 自动 compact、朗读 agent 回答；typed 是聊天，原生聊天保留可见、不套 veil，语音回合才逐句累积已读句。
 - 流断保护：`/whalego/live` 断开时停本地队列、提示「语音流断了，请再点一次球重试。」、phase 回 idle、取消后端回合；
   队列排空但 12s 没有新帧也会触发同一兜底；点球重试重新聆听，`probe12`/`probe13` 覆盖。
-- 验证：`node --test` 36/36；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14/15/16/17/18/19.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
+- 验证：`node --test` 46/46；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14/15/16/17/18/19.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
   原位淡入、深浅主题、全双工/回声过滤/插话/识别器重启、`no-speech` 不阻塞重启、权限被拒才停、compact 保麦克风、说话中结束、连续两问、Web Speech 实时转写与自动发送、typed、长输入框、麦克风被拒、流断开重试；`probe20` 用真实 key 跑「写文件 → 读回 → 说话中插话」，验证 agent 工具与插话 watchdog；`tools/check-playback.mjs` 11 项回执链路。
 - 推送注意：本机 `credential.helper` 全局先命中 Git Credential Manager，无缓存时会卡住；
   用 `git -c credential.helper= -c credential.helper=store push origin main` 走 `~/.git-credentials`。
