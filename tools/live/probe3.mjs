@@ -23,6 +23,12 @@ const logs = [];
 page.on('console', (message) => logs.push(`[${message.type()}] ${message.text()}`));
 page.on('pageerror', (error) => logs.push(`[pageerror] ${error.message}`));
 
+const press = async (selector) => {
+  const box = await page.locator(selector).first().boundingBox();
+  if (!box) throw new Error(`no box for ${selector}`);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+};
+
 const state = () =>
   page.evaluate(() => {
     const space = document.querySelector('.wg-space');
@@ -45,7 +51,7 @@ const state = () =>
 
 await page.goto(url, { waitUntil: 'domcontentloaded' });
 await page.waitForSelector('.wg-slot', { timeout: 30_000 });
-await page.locator('.wg-slot').click();
+await press('.wg-slot');
 await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.open === 'true', null, {
   timeout: 10_000,
 });
@@ -57,7 +63,7 @@ await page.evaluate(() => window.__whalegoSay('用一句话介绍你自己'));
 await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.phase === 'done', null, {
   timeout: 60_000,
 });
-await page.locator('.wg-top button').first().click();
+await press('.wg-top button');
 await page.waitForFunction(
   () =>
     document.querySelector('.wg-space')?.dataset.open === 'false' &&
@@ -96,7 +102,7 @@ console.log('TYPED-SPEAKING', await state());
 await page.screenshot({ path: 'shots-v6/typed-speaking.png' });
 
 // The big orb returns to the full page; the composer underneath stays usable.
-await page.locator('.wg-orb').click({ force: true });
+await press('.wg-orb');
 await page.waitForFunction(() => document.querySelector('.wg-space')?.dataset.compact === 'false', null, {
   timeout: 5_000,
 });

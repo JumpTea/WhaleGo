@@ -74,6 +74,7 @@ test('apply mounts the floating voice panel into the page', () => {
 test('speaker queues segments in order and settles only after the last line', async () => {
   const { window } = loadClient();
   const lines = [];
+  const spoken = [];
   const gates = [];
   const phases = [];
   const reports = [];
@@ -82,6 +83,7 @@ test('speaker queues segments in order and settles only after the last line', as
       lines.push(line);
       return new Promise((resolve) => gates.push(resolve));
     },
+    onLine: (line) => spoken.push(line),
     report: (state) => reports.push(state),
     phase: (state) => phases.push(state),
   });
@@ -102,6 +104,7 @@ test('speaker queues segments in order and settles only after the last line', as
   gates.shift()('ended');
   await tick();
   assert.deepEqual(lines, ['第一句。', '第二句。']);
+  assert.deepEqual(spoken, ['第一句。', '第二句。']);
   assert.deepEqual(reports, []);
 
   // Generation ends while the last line is still sounding: no receipt yet.
@@ -336,32 +339,10 @@ test('player primes one media element for iOS playback', () => {
   }
 });
 
-test('speaker reveals a line when it starts and counts it heard when it ends', async () => {
+test('echo filter ignores the assistant but keeps a real interruption', () => {
   const { window } = loadClient();
-  const shown = [];
-  const heard = [];
-  const gates = [];
-  const speaker = window.__whalegoInternals.createSpeaker({
-    play: () => new Promise((resolve) => gates.push(resolve)),
-    report: () => {},
-    phase: () => {},
-    onLine: (line) => shown.push(line),
-    onHeard: (line) => heard.push(line),
-  });
-
-  speaker.accept({
-    speech: [
-      { id: 't:0', text: '第一句。' },
-      { id: 't:1', text: '第二句。' },
-    ],
-  });
-  await tick();
-  assert.deepEqual(shown, ['第一句。']);
-  assert.deepEqual(heard, []);
-
-  gates.shift()('ended');
-  await tick();
-  assert.deepEqual(shown, ['第一句。', '第二句。']);
-  // The second line has started but not finished: only the first counts as heard.
-  assert.deepEqual(heard, ['第一句。']);
+  const echo = window.__whalegoInternals.looksLikeEcho;
+  assert.equal(echo('我是 DeepSeek 里的编码智能体', '我是 DeepSeek 里的编码智能体，能读写你工作区里的文件。'), true);
+  assert.equal(echo('停一下，说说你今天的心情', '我是 DeepSeek 里的编码智能体，能读写你工作区里的文件。'), false);
+  assert.equal(echo('嗯', '嗯，可以的。'), false, 'one syllable is not enough to call it an echo');
 });

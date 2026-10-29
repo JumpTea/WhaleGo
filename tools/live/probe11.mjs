@@ -53,4 +53,34 @@ const state = await page.evaluate(() => ({
 }));
 console.log('DENIED', state);
 await page.screenshot({ path: 'shots-v6/mic-denied.png' });
+
+// Granting permission later must let the orb retry: the blocked flag cannot
+// outlive the user's next tap.
+await page.evaluate(() => {
+  class Recovered {
+    constructor() {
+      this.lang = '';
+      this.continuous = false;
+      this.interimResults = false;
+      this.onresult = null;
+      this.onerror = null;
+      this.onend = null;
+    }
+    start() {
+      setTimeout(() => this.onstart?.({}), 10);
+    }
+    stop() {
+      this.onend?.();
+    }
+  }
+  window.SpeechRecognition = Recovered;
+  window.webkitSpeechRecognition = Recovered;
+});
+await page.locator('.wg-orb').click();
+await page.waitForTimeout(400);
+const retried = await page.evaluate(() => ({
+  phase: document.querySelector('.wg-space')?.getAttribute('data-phase'),
+  error: document.querySelector('.wg-error')?.textContent?.trim() || '',
+}));
+console.log('RETRY', retried);
 await browser.close();

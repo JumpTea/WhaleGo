@@ -32,7 +32,8 @@ await page.addInitScript(() => {
 await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 await page.waitForSelector('.wg-slot', { timeout: 60_000 });
 await page.waitForTimeout(600);
-await page.locator('.wg-slot').click();
+const slot = await page.locator('.wg-slot').boundingBox();
+await page.mouse.click(slot.x + slot.width / 2, slot.y + slot.height / 2);
 await page.waitForTimeout(900);
 
 const read = () =>

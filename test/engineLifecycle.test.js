@@ -87,6 +87,10 @@ test('web voice asks the real session agent and speaks its stream', async (t) =>
   assert.deepEqual(early.speech.map((part) => part.text), ['第一句。', '第二句。']);
   assert.equal(early.generationDone, false);
 
+  engine.onAssistantFrame('s1', { type: 'end' });
+  await tick();
+  // An assistant-message end is not a turn end: a tool step can follow it.
+  assert.equal(engine.live(effect.key).generationDone, false);
   engine.onSessionEvent('s1', { type: 'turn/end', reason: 'completed' });
   await new Promise((resolve) => setTimeout(resolve, 80));
   const final = engine.live(effect.key);
