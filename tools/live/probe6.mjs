@@ -1,4 +1,4 @@
-/** Slide-up / slide-down timing with no extra browser motion. */
+/** Direct-render fade timing + compact/keyboard geometry. */
 import { chromium } from 'playwright-core';
 
 const url = process.argv[2];
@@ -33,6 +33,12 @@ async function openPage(reducedMotion = 'no-preference') {
   return { context, page };
 }
 
+async function tap(page, selector) {
+  const box = await page.locator(selector).boundingBox();
+  if (!box) throw new Error(`no box for ${selector}`);
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+}
+
 const { context, page } = await openPage();
 await page.evaluate(() => {
   window.__samples = [];
@@ -47,19 +53,20 @@ await page.evaluate(() => {
   };
   requestAnimationFrame(tick);
 });
-await page.locator('.wg-slot').click();
+await tap(page, '.wg-slot');
 await page.waitForTimeout(1300);
 const opened = await page.evaluate(() => window.__samples);
-const openMove = opened.filter((s) => s.top < 930).filter((s, i, all) => i === 0 || s.top !== all[i - 1].top);
-const openDuration = openMove.at(-1).t - openMove[0].t;
-const gaps = openMove.slice(1).map((s, i) => s.t - openMove[i].t);
+const visible = opened.filter((s) => s.o > 0.02);
+const full = opened.find((s) => s.o > 0.98);
+const openDuration = full.t - visible[0].t;
+const gaps = opened.slice(1).map((s, i) => s.t - opened[i].t);
 console.log('OPEN', {
   frames: opened.length,
-  from: { top: openMove[0].top, t: openMove[0].t },
-  to: { top: openMove.at(-1).top, t: openMove.at(-1).t },
+  firstVisible: visible[0],
+  firstFull: full,
   durationMs: openDuration,
   maxGapMs: Math.max(...gaps),
-  opacityAtEnd: openMove.at(-1).o,
+  opacityAtEnd: opened.at(-1).o,
 });
 
 // Keyboard-sized viewport: the voice page must shrink with the composer, not
@@ -98,12 +105,13 @@ await page.evaluate(() => {
 await page.locator('.wg-top button').first().click();
 await page.waitForTimeout(700);
 const closed = await page.evaluate(() => window.__samples);
-const closeMove = closed.filter((s, i, all) => i === 0 || s.top !== all[i - 1].top);
+const closing = closed.filter((s) => s.o < 0.98);
+const gone = closed.find((s) => s.o < 0.02);
 console.log('CLOSE', {
-  from: closeMove[0].top,
-  to: closeMove.at(-1).top,
-  durationMs: closeMove.at(-1).t - closeMove[0].t,
-  maxGapMs: Math.max(...closeMove.slice(1).map((s, i) => s.t - closeMove[i].t)),
+  firstFade: closing[0],
+  firstGone: gone,
+  durationMs: gone.t - closing[0].t,
+  maxGapMs: Math.max(...closed.slice(1).map((s, i) => s.t - closed[i].t)),
 });
 await context.close();
 

@@ -243,13 +243,18 @@ python tools/brand/make-brand.py
 
 ### 已落地
 
-- 输入条活动区注入 32px 麦克风圆钮；点开从底部滑出浅色全屏语音页（460ms，只动 transform/opacity），
+- 输入条活动区注入 32px 麦克风圆钮；点开**原位淡入**全屏语音页（180ms opacity，不再整页上滑；
+  覆盖基础样式遗留的 `left:50%/translateX(-50%)`，否则 100vw 会把页面左移半屏并露出右侧空白）。
   顶部仅 38px ☰，原生输入条始终在下方可用；页面底边由每 500ms 复测的 composer card top 决定。
+- 深浅色跟随 `html.dsh-dark`：浅色 `#f7f7f5`、深色 `#151517`，按钮/错误卡/输入条/compact 渐变一起换肤。
 - 云朵球为离线烘焙的 1024×1024 WebP（`ORB_SKY`，约 11.5KB，base64 后约 15KB），
   `clamp(120px, min(54vw, 54vh, calc(100dvh - 2*var(--wg-composer) - 24px)), 300px)`；
   竖屏 430 宽 232，横屏收小到约 120，云层只有缩放/平移；无状态文字、无同心环。
-- 聆听（Web Speech zh-CN，1.4s 静音自动发）、思考、逐句说话、全屏点球缩成小球露聊天、点空白打断、有对话时 ☰ 收起留 64px 迷你球、空会话收起直接结束并恢复首页、
-  原生 ✕ 结束，全部实测通过。
+- **全双工**（Web Speech zh-CN `continuous`，`onend` 自动重启）：静音 1.4s 只发一次、不关识别器；
+  答案前 18 字被当回声送回时 phase/turn 不变；用户插话时 250ms 内停音频、`POST /whalego/cancel`，
+  900ms 后发新问题；compact 只改布局，不再 `stopListening`，缩球后麦克风仍开。
+- 说话时只显示**当前正在读的那一句**字幕（`createSpeaker` 的 `onLine`），不再把整段答案铺在语音页；
+  原生聊天仍按 DSH token 速度渲染，可能领先语音（宿主行为，见待办）。
 - compact：`.wg-stage` 从居中 `translateY(calc(50dvh - composer - 74px))` 下移、球同时 `scale(.5)`，
   460ms 同一曲线；视觉 27vw，原生聊天可点可滚；底部 210px 白色渐隐；点小球回全屏并在说话时 cancel+重听。
 - 语音回合走真实会话：`TextBrain.prompt` → 140ms 轮询 `snapshot` → 分句 `#captureSpeech` → SSE；
@@ -258,14 +263,16 @@ python tools/brand/make-brand.py
 - typed：原生输入框打字 → 自动 compact、朗读 agent 回答、聊天里保留完整文字。
 - 流断保护：`/whalego/live` 断开时停本地队列、提示「语音流断了，请再点一次球重试。」、phase 回 idle、取消后端回合；
   队列排空但 12s 没有新帧也会触发同一兜底；点球重试重新聆听，`probe12`/`probe13` 覆盖。
-- 验证：`node --test` 35/35；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14/15/16.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
-  入场时长、打断/收起/重开、空首页收起、说话中结束、连续两问、Web Speech 实时转写与自动发送、typed、长输入框、麦克风被拒、流断开重试；`tools/check-playback.mjs` 11 项回执链路。
+- 验证：`node --test` 36/36；`tools/live/probe2/3/5/6/8/9/10/11/12/13/14/15/16/17/18.mjs` 覆盖 430/360/320 宽、竖屏/横屏、
+  原位淡入、深浅主题、全双工/回声过滤/插话/识别器重启、compact 保麦克风、说话中结束、连续两问、Web Speech 实时转写与自动发送、typed、长输入框、麦克风被拒、流断开重试；`tools/check-playback.mjs` 11 项回执链路。
 - 推送注意：本机 `credential.helper` 全局先命中 Git Credential Manager，无缓存时会卡住；
   用 `git -c credential.helper= -c credential.helper=store push origin main` 走 `~/.git-credentials`。
 
 ### 待办
 
-- 真机（iOS Safari / Android Chrome）确认 Web Speech 授权、连续识别与 Edge TTS 首句延迟。
+- 真机（iOS Safari / Android Chrome）确认 Web Speech 授权、连续识别、`onend` 自动重启是否被系统拦、
+  以及 Edge TTS 首句延迟；iOS 若要求每次手势，全双工只能降级为点球继续听。
+- 原生聊天比语音快：插件无法让 DSH 的 token 流等音频；语音页已改为当前句字幕，compact 里原生聊天仍可能提前露出。
 - 打字回合目前整轮完成后一次朗读，未逐句流式；如需流式，要把 typed 回合也接 `#captureSpeech`。
 - 极长回答的最后几行仍可能落在小球后（DSH 虚拟列表不可安全改）；靠滚动阅读。
 - 发布版本号从 0.2.0 起（本次 WebUI 定稿），tag 与 release notes 待用户确认。

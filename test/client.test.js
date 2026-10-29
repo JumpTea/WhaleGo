@@ -335,3 +335,11 @@ test('player primes one media element for iOS playback', () => {
     globalThis.Audio = real;
   }
 });
+
+test('echo filter ignores the assistant but keeps a real interruption', () => {
+  const { window } = loadClient();
+  const echo = window.__whalegoInternals.looksLikeEcho;
+  assert.equal(echo('我是 DeepSeek 里的编码智能体', '我是 DeepSeek 里的编码智能体，能读写你工作区里的文件。'), true);
+  assert.equal(echo('停一下，说说你今天的心情', '我是 DeepSeek 里的编码智能体，能读写你工作区里的文件。'), false);
+  assert.equal(echo('嗯', '嗯，可以的。'), false, 'one syllable is not enough to call it an echo');
+});
