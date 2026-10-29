@@ -92,12 +92,16 @@ dsh <profile> --port 3100 --host 127.0.0.1 --no-open
 ### 冒烟测试（真 key）
 
 ```bash
+# Web 语音回合 + 真实 agent 工具：写文件、读回、说话中插话取消
+node tools/live/probe20.mjs http://127.0.0.1:3100 <token>
+
 # 纯 web 半侧：真实答案、文字流、多轮、流中取消、音频流
 node tools/smoke-web.mjs http://127.0.0.1:3100 <token>
-
-# agent 半侧：真实工具写文件 + shell 统计
-node tools/smoke-agent.mjs node_modules/@deepseek-ai/dsh/lib/bin.js <profile> D:\dsh-go-lab
 ```
+
+`probe20` 会用当前 `standard` 预设启动真实 agent 回合，把 `.whalego-live-smoke.txt` 写进工作区，再读回；
+磁盘断言和语音回合的 turnId/phase 都会检查。旧的 `tools/smoke-agent.mjs` 仍按老版 `dsh <profile> <prompt>`
+调用，新 CLI 已不接受位置参数，不再作为当前验收入口。
 
 要求：
 
