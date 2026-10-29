@@ -21,6 +21,9 @@ docs/对话纪要.md
 shots-*/
 tools/live/shots-*/
 tools/live/orb-candidates.png
+# Agent/development probes stay local; the public repo ships product only.
+tools/smoke-agent.mjs
+tools/live/probe*.mjs
 
 film/node_modules/
 film/out/
