@@ -1,6 +1,9 @@
 import { chromium } from 'playwright-core';
 
 const url = process.argv[2];
+const width = Number(process.argv[3] || 430);
+const shot = (scheme, view) =>
+  `tools/live/shots-v6/duplex-theme-${scheme}-${width === 430 ? '' : `${width}-`}${view}.png`;
 const edge = 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
 const browser = await chromium.launch({ executablePath: edge, headless: true });
 
@@ -12,7 +15,7 @@ async function press(page, selector) {
 
 for (const scheme of ['light', 'dark']) {
   const page = await browser.newPage({
-    viewport: { width: 430, height: 932 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: scheme,
+    viewport: { width, height: 932 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: scheme,
   });
   await page.addInitScript(() => {
     class FakeRecognition {
@@ -51,7 +54,7 @@ for (const scheme of ['light', 'dark']) {
     };
   });
   console.log(scheme, 'FULL', JSON.stringify(full, null, 2));
-  await page.screenshot({ path: `tools/live/shots-v6/duplex-theme-${scheme}-full.png` });
+  await page.screenshot({ path: shot(scheme, 'full') });
 
   await press(page, '.wg-orb:not(.mini)');
   await page.waitForTimeout(700);
@@ -67,7 +70,7 @@ for (const scheme of ['light', 'dark']) {
     };
   });
   console.log(scheme, 'COMPACT', JSON.stringify(compact, null, 2));
-  await page.screenshot({ path: `tools/live/shots-v6/duplex-theme-${scheme}-compact.png` });
+  await page.screenshot({ path: shot(scheme, 'compact') });
   await page.close();
 }
 await browser.close();
