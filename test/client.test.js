@@ -346,3 +346,11 @@ test('echo filter ignores the assistant but keeps a real interruption', () => {
   assert.equal(echo('停一下，说说你今天的心情', '我是 DeepSeek 里的编码智能体，能读写你工作区里的文件。'), false);
   assert.equal(echo('嗯', '嗯，可以的。'), false, 'one syllable is not enough to call it an echo');
 });
+
+
+test('the client build stamp matches the package version', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const match = /CLIENT_BUILD = '([^']+)'/.exec(source);
+  assert.ok(match, 'CLIENT_BUILD is missing');
+  assert.equal(match[1], pkg.version);
+});
