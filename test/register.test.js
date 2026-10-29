@@ -94,7 +94,7 @@ test('apply mounts panels, handlers, strip and the health route', async () => {
   apply(ctx);
 
   assert.deepEqual([...panels.keys()].sort(), ['whalego.about', 'whalego.diag', 'whalego.live', 'whalego.settings']);
-  assert.deepEqual([...handlers.keys()].sort(), ['whalego.ask', 'whalego.explain', 'whalego.read', 'whalego.stop']);
+  assert.deepEqual([...handlers.keys()].sort(), ['whalego.ask', 'whalego.explain', 'whalego.read', 'whalego.status', 'whalego.stop']);
   assert.ok(media.has('speech'));
   assert.equal(typeof capability, 'function');
   assert.ok(strips.has('whalego.status'));
