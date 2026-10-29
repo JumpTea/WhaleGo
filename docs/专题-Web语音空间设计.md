@@ -133,7 +133,7 @@
 
 ## 6. 验收
 
-- `node --test`：**36/36**（含 player 预取、speaker 预热/停滞判定、iOS 解锁、真实会话语音回合、回执落定）。
+- `node --test`：**46/46**（含 player 预取、speaker 预热/停滞判定、iOS 解锁、真实会话语音回合、回执落定）。
 - `node tools/check-playback.mjs`：8 条路由 + 11 项回执链路，真 HTTP + 桩语音脑。
 - 浏览器探针（`tools/live/probe2.mjs` / `probe3.mjs` / `probe5.mjs` / `probe6.mjs` / `probe8.mjs` / `probe9.mjs` / `probe10.mjs` / `probe11.mjs` / `probe12.mjs` / `probe13.mjs` / `probe14.mjs` / `probe15.mjs` / `probe16.mjs` / `probe17.mjs` / `probe18.mjs` / `probe19.mjs` / `probe20.mjs`）：
   - 430×932：全屏球 232（聆听 241）、composerInset 146、compact 球 116、原生输入框可见；说话中 compact 的 `data-veil=true`，说完 `data-veil=false`，截图 `03-compact.png` / `04-compact-done.png` 分别是「只有字幕」和「完整聊天」；
