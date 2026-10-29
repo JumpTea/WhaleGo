@@ -144,7 +144,7 @@
   - `probe14`：430×932 与 932×430 两种视口，球都完整落在语音页内；竖屏仍是 232/241，横屏收小到 125，不压输入条。
   - `probe15`：空首页开/关语音模式，卡片从 487 推到底 792，收起后回到 487 且 `data-whalego-mode=0`，不再把首页标题压在底部。
   - `probe16`：同一会话连续两问，turnId 不同、两条提问都在原生聊天、无 pageerror。
-  - `probe17`：深/浅主题各开一次，`--wg-bg` 分别为 `#f7f7f5` / `#151517`；页面 `transform:none`、宽度 430、右缘 `atRight=wg-space`，右侧不再漏出原生页。
+  - `probe17`：深/浅主题各开一次，`--wg-bg` 分别为 `#f7f7f5` / `#151517`；页面 `transform:none`、宽度 430、右缘 `atRight=wg-space`，右侧不再漏出原生页；640 宽同样 `width:640`、`atRight=wg-space`。
   - `probe18`：全双工状态机——说话中识别器常开；把答案前 18 字当 TTS 回声送回，phase/turn 不变；用户插话后 250ms 内停音频、`POST /whalego/cancel`，900ms 后发第二问；两次提问各出现一次、无重复气泡；手动 `stop()` 后识别器自动重启（starts 2）。
   - `probe19`：`no-speech` 后识别器重启（starts 2、phase 仍 listening、无错误）；`not-allowed` 只启动一次、phase idle、球下显示权限提示。
   - `probe5` 增补：收起态的迷你球随键盘收缩，600px 高时 mini y380–444、card 466、间距 22px。
