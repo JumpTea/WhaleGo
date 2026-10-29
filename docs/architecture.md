@@ -104,12 +104,17 @@ idle ──ask──▶ thinking ──首块音频──▶ speaking ──audi
 ```text
 prefs.mode === 'dual'  → dual
 prefs.mode === 'read'  → read（只朗读已有答案，不开语音脑）
-prefs.mode === 'auto'  → complexityOf(question)
-                         ├─ 含「整理 / 对比 / 表格 / 文件 / 代码…」→ dual
-                         └─ 其余 → voice-only
+prefs.mode === 'auto'  → complexityOf(question, previous)
+                         ├─ 命中强词 → dual
+                         ├─ ≥24 字，或 ≥15 字带问号 → dual
+                         ├─ 上一轮是复杂、且这句是追问 → dual
+                         └─ 其余（含寒暄）→ voice-only
 ```
 
 `complexityOf` 是启发式，不是模型判断；voice-only 只省掉文字脑，不省用户消息。判断错时用户仍能看到语音行，并可手动切 dual。
+
+强词表在 `lib/prompts.js` 的 `STRONG`：动作（帮我写 / 部署 / 翻译）、解释（区别 / 原理 / 举例）、
+决策（选哪个 / 推荐）、代码（报错 / 接口 / bug）、原有查询类。寒暄走 `CASUAL` 否定表，永远只跑语音。
 
 ## 6. 数据与隐私
 
