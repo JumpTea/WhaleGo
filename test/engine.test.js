@@ -218,5 +218,7 @@ test('snapshot exposes the native seam as missing', () => {
   const snapshot = engine.snapshot('s1');
   assert.equal(snapshot.nativeLabel, '未接入（P0）');
   assert.equal(snapshot.lines[0].title, '还没有记录');
-  assert.equal(engine.diagnostics({}).rows.length, 5);
+  // Five native seams plus the trailing dsh-orb companion row.
+  assert.equal(engine.diagnostics({}).rows.length, 6);
+  assert.deepEqual(engine.diagnostics({}).rows.at(-1)[0], 'dsh-orb');
 });
