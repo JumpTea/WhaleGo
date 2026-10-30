@@ -129,10 +129,19 @@ try {
 
   const frames = [];
   let ended = null;
+  let receiptPromise = null;
+  let openBeforeReceipt = false;
   await followSse(`/whalego/live?turn=${encodeURIComponent(turnId)}&session=${SESSION}`, (event, data) => {
-    if (event === 'live') frames.push(data);
+    if (event === 'live') {
+      frames.push(data);
+      if (data.generationDone === true && data.state === 'speaking' && !receiptPromise) {
+        openBeforeReceipt = engine.live(turnId)?.state === 'speaking';
+        receiptPromise = post('/whalego/playback', { sessionId: SESSION, turnId, state: 'ended' });
+      }
+    }
     if (event === 'end') ended = data;
   });
+  const receipt = await receiptPromise;
 
   const speech = [];
   const seen = new Set();
@@ -146,14 +155,13 @@ try {
   check(speech.length >= 2, `the live stream delivers whole sentences (${speech.length})`);
   check(speech.every((part) => part.text.trim().length > 0), 'every sentence carries text');
   check(frames.some((frame) => frame.generationDone === true), 'the stream announces the end of generation');
-  check(ended?.state === 'speaking', 'the turn is handed over to the browser in the speaking state');
+  check(frames.some((frame) => frame.state === 'speaking'), 'the turn is handed over to the browser in the speaking state');
 
   // The point of the receipt: without it the turn is still open.
-  check(engine.live(turnId).state === 'speaking', 'the turn stays open until the browser reports back');
+  check(openBeforeReceipt, 'the turn stays open until the browser reports back');
 
-  const receipt = await post('/whalego/playback', { sessionId: SESSION, turnId, state: 'ended' });
-  check(receipt.status === 200 && receipt.body.completed === true, 'the playback receipt settles the turn');
-  check(engine.live(turnId).state === 'done', 'the settled turn is done');
+  check(receipt?.status === 200 && receipt?.body?.completed === true, 'the playback receipt settles the turn');
+  check(engine.live(turnId).state === 'done' && ended?.state === 'done', 'the settled turn is done');
 
   const again = await post('/whalego/playback', { sessionId: SESSION, turnId, state: 'ended' });
   check(again.body.completed === false, 'a repeated receipt is refused instead of resurrecting the turn');

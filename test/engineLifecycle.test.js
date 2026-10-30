@@ -247,3 +247,33 @@ test('seen records how much of the written answer reached the screen', (t) => {
   assert.equal(engine.setSeen(effect.key, '第一段'), true);
   assert.equal(transcript.get(effect.key).seen, '第一段');
 });
+
+test('web dual turn stays active until B finishes even if A playback ends first', async (t) => {
+  const { engine, prompts } = harness(t, {
+    prompt: async () => {},
+    stream: async function* () {
+      yield { type: 'text-delta', text: '先说结论。' };
+    },
+  });
+  const effect = engine.ask({ sessionId: 's1', draft: '帮我分析一下这个方案' });
+  await until(() => engine.live(effect.key)?.generationDone && prompts.length === 1);
+  // A finished generating and its audio finished playing in the browser while B is still streaming.
+  assert.equal(engine.completePlayback({ sessionId: 's1', turnId: effect.key, state: 'ended' }), true);
+  assert.equal(engine.live(effect.key).playbackDone, true);
+  assert.equal(engine.live(effect.key).writtenDone, false);
+  assert.equal(engine.live(effect.key).state, 'speaking');
+
+  engine.onAssistantFrame('s1', { type: 'start', turn: 't1' });
+  engine.onAssistantFrame('s1', {
+    type: 'chunk',
+    turn: 't1',
+    chunk: { type: 'text-delta', text: '这里是完整的书面展开。' },
+  });
+  assert.equal(engine.live(effect.key).text, '这里是完整的书面展开。');
+  assert.equal(engine.latestTyped('s1'), null, 'B must not be misclassified as a composer-typed turn');
+
+  engine.onSessionEvent('s1', { type: 'turn/end', reason: 'completed' });
+  await until(() => engine.live(effect.key).state === 'done');
+  assert.equal(engine.live(effect.key).writtenDone, true);
+  assert.equal(engine.latestTyped('s1'), null);
+});
