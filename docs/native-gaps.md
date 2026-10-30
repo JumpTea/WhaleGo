@@ -340,6 +340,12 @@ WhaleGo 把核心接缝收在 `lib/nativeSeam.js`：
 
 注意：`openVoiceTurn` 与 `openVoiceInput` 现在只存在于文档，代码里没有；原生桥落地前要先补探测，再在 `lib/engine.js` 里切换，不能只改文档。
 
+> 现状（2026-10-30）：App 0.9.4 已原生渲染持久语音行并内联播放，语音行的**展示与落库不依赖本表的
+> `voiceLine` 桥**——引擎经 `session.append` 落会话语音行（durable rows），App 直接渲染。表中接口仍然是
+> 「流式/免提」补齐路径：`openVoiceTurn` / `openVoiceInput` 未实现；`voice.partial/final` 只有 App→插件
+> 一个方向且 App 侧不发射（island WebView 无条件 `deny()` 权限），免提与实时转写继续以浏览器入口为准。
+> 当轮新增的 hostWrites lane 与提醒见 [`专题-原生侧语音链与提醒.md`](专题-原生侧语音链与提醒.md)。
+
 设置迁移是插件侧改动：把 `whalego.settings` 面板的字段声明换成插件设置 schema，不占原生接缝。
 
 ## 9. 联调用例

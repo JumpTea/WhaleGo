@@ -22,7 +22,7 @@ WhaleGo 是 DSH-Go 的双脑语音插件：语音脑先说，文字脑只在复�
 - 双脑编排：语音脑流式出字、文字脑独立回合、TTS、缓存、打断、状态机。Web 半侧已按句流式：`/whalego/live` 下发 `speech[]` 分句，浏览器逐句播放，播完用 `POST /whalego/playback` 回报才落定回合；原生 `media` 路径仍是整段合成。
 - 设置：11 组偏好，全部写入 `$DSH_HOME/whalego/prefs.json`；4 个声明式面板。
 - 原生接缝：`lib/nativeSeam.js` 对 5 个方法做特性探测与空实现。
-- 单测：`node --test`，8 项通过。
+- 单测：`node --test`，59 项通过（2026-10-30）。
 - 契约检查：用 DSH-Go 的 `kit-lib-check` 跑过 `--lang zh --load`，无错误。
 - 品牌：像素鲸 logo、社交预览图、品牌文案。
 
@@ -177,7 +177,7 @@ audio.ended → finishJob → transcript done → idle
 
 ```bash
 cd WhaleGo
-node --test                 # 35 项单测
+node --test                 # 59 项单测
 node --check lib/index.js   # 语法
 ```
 
@@ -281,3 +281,19 @@ python tools/brand/make-brand.py
 - 打字回合目前整轮完成后一次朗读，未逐句流式；如需流式，要把 typed 回合也接 `#captureSpeech`。
 - 极长回答的最后几行仍可能落在小球后（DSH 虚拟列表不可安全改）；靠滚动阅读。
 - 发布版本号从 0.2.0 起（本次 WebUI 定稿），tag 与 release notes 待用户确认。
+
+## 12. 原生侧语音链与提醒（2026-10-30）
+
+App 0.9.4 已原生渲染持久语音行并可内联播放，插件不再需要 `voiceLine` 桥才能出可见行；
+本轮在原生侧复刻 WebUI 语音能力的主干：用户在 App 里发一句话（打字或系统语音输入），
+引擎经 `session/event` 的 `user/message` 监听到后自动补一段语音答案（A 段），同会话落库；
+文字答案（B 段）由宿主 agent 自己的回合承担，插件不重复跑。鲸语按钮按 12h 一次的节奏
+toast+复制浏览器入口地址（完整免提/流式体验仍只在浏览器入口），live 面板有常驻提示行，
+设置页新增「原生自动有声问答」开关。自查要点：`#ownPrompt` 登记自发送印记防「自己 prompt
+自己再答一遍」；hostWrites lane 里 TTS 失败不 stall（回合一照常收束）。
+
+- 数据流、证据链、验收：[`专题-原生侧语音链与提醒.md`](专题-原生侧语音链与提醒.md)。
+- 测试：`node --test` 59 pass；`check-playback` 11/11；`probe21` 15/15。
+- 版本：`0.9.0`（插件）与 `CLIENT_BUILD = '0.9.0'` 同步。
+- dsh-go 新版事实：桌面宿主 rc.5（npm `@deepseek-ai/dsh@0.2.1-rc.5`）、App 0.9.4；`voice.partial/final`
+  只在 App→插件方向存在而 App 不发射——原生免提输入仍以浏览器入口为准。
