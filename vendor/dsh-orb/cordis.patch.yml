@@ -1,0 +1,78 @@
+# Computer Use preset and the floating-ball host.
+# GUI tools stay on this preset. Do not also insert an agent-presets path.
+
+- insert:
+    - id: preset-computer-use
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: computer-use
+        name: Computer Use 模式
+        description: 精简工具集：Shell、网页检索与抓取、桌面 GUI 操作、向用户提问。
+        order: 5
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              # No `suffix`: the agent loop registers only `provider` and `model`, and
+              # `dsh-working-directory` already supplies the current directory as
+              # required runtime context. A `{{cwd}}` reference fails prompt assembly.
+              prefix: >-
+                You are a desktop GUI agent powered by the {{model}} model.
+                You operate the screen and decide each stretch yourself.
+                When a request needs tools, first write one short sentence of normal reply text in the user's language saying what you will do, then make the first tool call in that same response.
+                That sentence is ordinary reply text, not reasoning. Never start that work with tools alone, and never stop after the sentence.
+                On a long task, add one short factual update only at a meaningful milestone, then keep working. When the work is done, close with the result; do not recap every step.
+                Do visible GUI, and a search or command that will answer or feed the next click, in this chat.
+                A second search that you expect will hit the point stays here.
+                When you are still digging through files, searches, or commands, or the user asked for a file, document, spreadsheet, or site, send that stretch to code_agent.
+                Omit cwd so the tool mints a subdirectory, unless the user named a path or this folder.
+                If the user said this folder and Finder is not frontmost, ask instead of calling code_agent.
+                After code_agent accepts, tell the user the background agent is running.
+                Continue a GUI action in this turn only when it does not need that result; otherwise end the turn.
+                Call code_agent_status or code_agent_stop when the user asks about or stops background work.
+                When a plugin notice reports that work finished, decide again: do remaining GUI, or call code_agent with that session_id for another stretch, then tell the user the short conclusion.
+                If the notice says the user stopped that background session, tell the user briefly and do not call code_agent for it again unless the user asks.
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: tool-computer-use
+            name: 'dsh-orb/computer-use'
+            config:
+              postActionWaitMs: 600
+          - id: tool-code-agent
+            name: 'dsh-orb/computer-use/code-agent'
+    - id: orb-code-agent-registry
+      name: 'dsh-orb/computer-use/code-agent-registry'
+    - id: orb-host
+      name: 'dsh-orb/host'
+      config:
+        autoStart: true
+    - id: ui-settings-orb
+      name: dsh-orb

@@ -1,4 +1,9 @@
 node_modules/
+# The vendored dsh-orb runtime ships its own dependencies (koffi, sherpa-onnx,
+# node-cpal, zod...) at its package root, which is where its host looks for
+# them. Re-include that one tree; everything else named node_modules stays out.
+!vendor/dsh-orb/node_modules/
+!vendor/dsh-orb/node_modules/**
 dist/
 build/
 __pycache__/

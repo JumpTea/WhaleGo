@@ -1,0 +1,53 @@
+import type { SurnameMode } from "../type";
+export { PatternsNormal } from "../../data/patterns";
+export declare const enum TokenizationAlgorithm {
+    ReverseMaxMatch = 1,
+    MaxProbability = 2,
+    MinTokenization = 3
+}
+/**
+ * @description: AC 自动机
+ */
+export interface Pattern {
+    zh: string;
+    pinyin: string;
+    probability: number;
+    length: number;
+    priority: number;
+    dict: string | symbol;
+    pos?: string;
+    node?: TrieNode;
+}
+export interface MatchPattern extends Pattern {
+    index: number;
+}
+declare class TrieNode {
+    children: Map<string, TrieNode>;
+    fail: TrieNode | null;
+    patterns: Pattern[];
+    parent: TrieNode | null;
+    key: string;
+    constructor(parent: TrieNode | null, key?: string);
+}
+export declare class AC {
+    root: TrieNode;
+    dictMap: Map<string | Symbol, Set<Pattern>>;
+    queues: TrieNode[][];
+    private pendingBuild;
+    constructor();
+    build(patternList: Pattern[]): void;
+    setPendingBuild(build: () => void): void;
+    clearPendingBuild(): void;
+    private flushPendingBuild;
+    buildTrie(patternList: Pattern[]): void;
+    buildFailPointer(): void;
+    addPatternToDictMap(pattern: Pattern): void;
+    addNodeToQueues(trieNode: TrieNode, depth: number): void;
+    insertPattern(patterns: Pattern[], pattern: Pattern): void;
+    removeDict(dictName: string | symbol): void;
+    match(text: string, surname: SurnameMode, zhChars?: string[]): MatchPattern[];
+    search(text: string, surname: SurnameMode, algorithm?: TokenizationAlgorithm, zhChars?: string[]): MatchPattern[];
+}
+export declare const acTree: AC;
+export declare function ensureAcBuilt(): void;
+export declare function scheduleAcBuild(): void;

@@ -1,12 +1,17 @@
 {
   "name": "whalego",
-  "version": "0.9.1",
+  "version": "0.10.0",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./client": "./lib/client.js"
+    "./client": "./lib/client.js",
+    "./orb-host": "./vendor/dsh-orb/dist/host/index.js",
+    "./orb-computer-use": "./vendor/dsh-orb/dist/computer-use/index.js",
+    "./orb-computer-use/code-agent": "./vendor/dsh-orb/dist/computer-use/code-agent.js",
+    "./orb-computer-use/code-agent-registry": "./vendor/dsh-orb/dist/computer-use/code-agent-registry.js",
+    "./orb-settings": "./vendor/dsh-orb/lib/index.js"
   },
   "description": "Dual-brain voice plugin for DSH-Go. Hear it first, read it after.",
   "license": "MIT",

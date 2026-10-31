@@ -1,0 +1,79 @@
+{
+  "upstream": {
+    "crate": "cpal",
+    "version": "0.18.2",
+    "source": "Cargo.lock"
+  },
+  "translationRules": {
+    "names": "Rust snake_case is JavaScript camelCase; enum variants retain PascalCase",
+    "result": "Result<T, Error> returns T or throws CpalError",
+    "option": "Option<T> is T | null",
+    "iterator": "Rust iterators are JavaScript iterables (currently materialized arrays)",
+    "duration": "Duration is a non-negative bigint count of nanoseconds",
+    "genericSample": "A Rust sample type parameter is an explicit SampleFormat value and a matching typed array",
+    "drop": "Rust Drop is represented by garbage-collection finalizers plus idempotent close()",
+    "callbacks": "CPAL callbacks execute synchronously on the Node thread while the native audio callback waits"
+  },
+  "bindings": [
+    { "rust": "available_hosts", "javascript": "availableHosts", "status": "bound" },
+    { "rust": "default_host", "javascript": "defaultHost", "status": "bound" },
+    { "rust": "host_from_id", "javascript": "hostFromId", "status": "bound" },
+    { "rust": "ALL_HOSTS", "javascript": "ALL_HOSTS", "status": "bound" },
+    { "rust": "SAMPLE_RATE_CD", "javascript": "SAMPLE_RATE_CD", "status": "bound" },
+    { "rust": "SAMPLE_RATE_48K", "javascript": "SAMPLE_RATE_48K", "status": "bound" },
+
+    { "rust": "HostId", "javascript": "HostId", "status": "bound", "members": ["name", "Display/toString", "FromStr/fromString", "Eq/equals"] },
+    { "rust": "DeviceId", "javascript": "DeviceId", "status": "bound", "members": ["new/constructor", "host", "id", "Display/toString", "FromStr/fromString", "Eq/equals"] },
+    { "rust": "Host", "javascript": "Host", "status": "bound", "members": ["id", "static isAvailable", "devices", "deviceById", "defaultInputDevice", "defaultOutputDevice", "inputDevices", "outputDevices", "close"] },
+    { "rust": "Device", "javascript": "Device", "status": "bound", "members": ["clone", "description", "id", "supportsInput", "supportsOutput", "supportedInputConfigs", "supportedOutputConfigs", "defaultInputConfig", "defaultOutputConfig", "buildInputStream", "buildOutputStream", "buildInputStreamRaw", "buildOutputStreamRaw", "Display/toString", "Eq/equals", "close"] },
+    { "rust": "Stream", "javascript": "Stream", "status": "bound", "members": ["play", "pause", "bufferSize", "now", "close"] },
+
+    { "rust": "DeviceDescription", "javascript": "DeviceDescription", "status": "bound", "members": ["name", "manufacturer", "driver", "deviceType", "interfaceType", "direction", "supportsInput", "supportsOutput", "address", "extended", "Display/toString"] },
+    { "rust": "DeviceDescriptionBuilder", "javascript": "DeviceDescriptionBuilder", "status": "bound", "members": ["new/constructor", "manufacturer", "driver", "deviceType", "interfaceType", "direction", "address", "extended", "addExtendedLine", "build"] },
+    { "rust": "DeviceType", "javascript": "DeviceType", "status": "bound" },
+    { "rust": "InterfaceType", "javascript": "InterfaceType", "status": "bound" },
+    { "rust": "DeviceDirection", "javascript": "DeviceDirection", "status": "bound" },
+
+    { "rust": "BufferSize", "javascript": "BufferSize", "status": "bound", "members": ["Default", "Fixed"] },
+    { "rust": "SupportedBufferSize", "javascript": "SupportedBufferSize", "status": "bound", "members": ["Unknown", "Range"] },
+    { "rust": "StreamConfig", "javascript": "StreamConfig", "status": "bound" },
+    { "rust": "SupportedStreamConfig", "javascript": "SupportedStreamConfig", "status": "bound", "members": ["new/constructor", "channels", "sampleRate", "bufferSize", "sampleFormat", "config"] },
+    { "rust": "SupportedStreamConfigRange", "javascript": "SupportedStreamConfigRange", "status": "bound", "members": ["new/constructor", "channels", "minSampleRate", "maxSampleRate", "bufferSize", "sampleFormat", "withSampleRate", "tryWithSampleRate", "withMaxSampleRate", "containsRate", "tryWithStandardSampleRate", "withStandardSampleRate", "cmpDefaultHeuristics"] },
+
+    { "rust": "SampleFormat", "javascript": "SampleFormat", "status": "bound", "members": ["sampleSize", "bitsPerSample", "isInt", "isUint", "isFloat", "isDsd", "Display/toString"] },
+    { "rust": "I24", "javascript": "I24", "status": "bound", "members": ["new", "newUnchecked", "from", "inner", "MIN", "MAX", "EQUILIBRIUM"] },
+    { "rust": "U24", "javascript": "U24", "status": "bound", "members": ["new", "newUnchecked", "from", "inner", "MIN", "MAX", "EQUILIBRIUM"] },
+    { "rust": "Sample trait", "javascript": "Sample and SampleFormatValue methods", "status": "structural", "members": ["EQUILIBRIUM/equilibrium", "IDENTITY/identity", "toSample", "fromSample", "toSignedSample", "toFloatSample", "addAmp", "mulAmp"] },
+    { "rust": "FromSample trait", "javascript": "FromSample.fromSample", "status": "structural" },
+    { "rust": "SizedSample trait", "javascript": "SizedSample.format plus typed signatures", "status": "structural", "reason": "JavaScript has no compile-time associated constants; SampleFormat and TypeScript carry the association" },
+
+    { "rust": "Data", "javascript": "Data", "status": "bound", "members": ["sampleFormat", "len", "bytes", "bytesMut", "asSlice", "asSliceMut"] },
+    { "rust": "Data::from_parts", "javascript": null, "status": "rust-only", "reason": "Unsafe raw-pointer host-construction API has no safe JavaScript representation" },
+    { "rust": "StreamInstant", "javascript": "StreamInstant", "status": "bound", "members": ["ZERO", "new/constructor", "fromNanos", "fromMillis", "fromMicros", "fromSecsF64", "asNanos", "checkedDurationSince", "saturatingDurationSince", "durationSince", "checkedAdd", "checkedSub", "Add/add", "Sub/sub"] },
+    { "rust": "InputStreamTimestamp", "javascript": "InputStreamTimestamp", "status": "bound" },
+    { "rust": "OutputStreamTimestamp", "javascript": "OutputStreamTimestamp", "status": "bound" },
+    { "rust": "InputCallbackInfo", "javascript": "InputCallbackInfo", "status": "bound", "members": ["new/constructor", "timestamp"] },
+    { "rust": "OutputCallbackInfo", "javascript": "OutputCallbackInfo", "status": "bound", "members": ["new/constructor", "timestamp"] },
+
+    { "rust": "Error", "javascript": "Error (CpalError)", "status": "bound", "members": ["new/constructor", "withMessage/constructor message", "kind", "message/cpalMessage", "Display/Error.message"] },
+    { "rust": "ErrorKind", "javascript": "ErrorKind", "status": "bound" },
+
+    { "rust": "platform::JackHost", "javascript": "JackHost", "status": "conditional", "feature": "backend-jack", "members": ["new/constructor", "isAvailable", "setConnectAutomatically", "setStartServerAutomatically", "inputDeviceWithName", "outputDeviceWithName"] },
+    { "rust": "platform::PipeWireHost", "javascript": "PipeWireHost", "status": "conditional", "feature": "backend-pipewire", "members": ["new/constructor", "isAvailable", "setConnectAutomatically"] },
+    { "rust": "platform::CustomHost", "javascript": "CustomHost", "status": "conditional-structural", "feature": "test-host/custom", "members": ["fromHost", "Host methods"] },
+    { "rust": "platform::CustomDevice", "javascript": "CustomDevice", "status": "conditional-structural", "feature": "test-host/custom", "members": ["fromDevice", "clone", "Device methods including typed-to-raw callback adaptation"] },
+    { "rust": "platform::CustomStream", "javascript": "CustomStream", "status": "conditional-structural", "feature": "test-host/custom", "members": ["fromStream", "Stream methods"] },
+
+    { "rust": "Devices, SupportedInputConfigs, SupportedOutputConfigs", "javascript": "Iterable return values", "status": "structural" },
+    { "rust": "DevicesFiltered, InputDevices, OutputDevices", "javascript": "Iterable return values", "status": "structural" },
+    { "rust": "ChannelCount, SampleRate, FrameCount", "javascript": "number with runtime range checks and TypeScript aliases", "status": "structural" },
+    { "rust": "HostTrait, DeviceTrait, StreamTrait", "javascript": "Host, Device, Stream instance methods", "status": "structural" },
+    { "rust": "platform as_inner/as_inner_mut/into_inner", "javascript": null, "status": "rust-only", "reason": "Rust enum internals and ownership escape hatches are not observable CPAL behavior in JavaScript" },
+    { "rust": "assert_stream_send!, assert_stream_sync!, impl_platform_host!", "javascript": null, "status": "rust-only", "reason": "Compile-time Rust macros and Send/Sync proofs have no JavaScript runtime operation" }
+  ],
+  "extensions": {
+    "resourceManagement": ["Host.close", "Device.close", "Stream.close", "Stream.state"],
+    "bindingErrors": ["BINDING_LOAD_FAILED", "STREAM_CLOSED", "INVALID_BUFFER", "INPUT_OVERFLOW", "CALLBACK_FAILED"],
+    "higherLevelNamespace": "convenience"
+  }
+}

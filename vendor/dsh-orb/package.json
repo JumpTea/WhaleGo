@@ -1,0 +1,89 @@
+{
+  "name": "dsh-orb",
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Installable Orb bundle. Inserts the Computer Use preset and the floating-ball host.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "computer-use",
+    "floating-ball",
+    "desktop"
+  ],
+  "homepage": "https://github.com/mini-yifan/dsh-orb-cordis#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mini-yifan/dsh-orb-cordis.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mini-yifan/dsh-orb-cordis/issues"
+  },
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": "./client.js",
+    "./host": {
+      "types": "./dist/host/index.d.ts",
+      "default": "./dist/host/index.js"
+    },
+    "./computer-use": {
+      "types": "./dist/computer-use/index.d.ts",
+      "default": "./dist/computer-use/index.js"
+    },
+    "./computer-use/code-agent": {
+      "types": "./dist/computer-use/code-agent.d.ts",
+      "default": "./dist/computer-use/code-agent.js"
+    },
+    "./computer-use/code-agent-registry": {
+      "types": "./dist/computer-use/code-agent-registry.d.ts",
+      "default": "./dist/computer-use/code-agent-registry.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "client.js",
+    "dist",
+    "cordis.patch.yml"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-agent": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-api-session-controller": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-attachment": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-brand": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-home-paths": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-llm": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-session": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-session-projection": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-system-prompt": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-tools": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-user-approval": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-user-questions": ">=0.1.7-rc.2 <0.3.0-0",
+    "@deepseek-ai/schemastery": "3.18.4"
+  },
+  "peerDependenciesMeta": {
+    "@deepseek-ai/dsh-session-projection": {
+      "optional": true
+    }
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
